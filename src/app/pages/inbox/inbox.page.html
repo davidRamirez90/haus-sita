@@ -1,0 +1,36 @@
+<section class="inbox">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">Brain dump</p>
+      <h1>Inbox</h1>
+    </div>
+    <div class="hint">New tasks default to inbox, flexible timing.</div>
+  </header>
+
+  <div class="composer">
+    <input
+      type="text"
+      placeholder="What needs doing?"
+      [ngModel]="newTitle()"
+      (ngModelChange)="newTitle.set($event)"
+      (keyup.enter)="addTask()"
+      [disabled]="submitting()"
+      aria-label="New task title"
+    />
+    <button type="button" (click)="addTask()" [disabled]="submitting()">Add</button>
+  </div>
+
+  <div class="message" *ngIf="error()">{{ error() }}</div>
+  <div class="message" *ngIf="loading()">Loading…</div>
+
+  <div class="list" *ngIf="!loading()">
+    <app-task-card
+      *ngFor="let task of tasks()"
+      [task]="task"
+      [priority]="'none'"
+      class="task-item"
+    ></app-task-card>
+
+    <div class="empty" *ngIf="!tasks().length && !error()">Nothing here yet. Add the first task.</div>
+  </div>
+</section>

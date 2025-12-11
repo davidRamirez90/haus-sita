@@ -1,0 +1,102 @@
+:host {
+  display: block;
+}
+
+.inbox {
+  max-width: 760px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+h1 {
+  margin: 2px 0 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.eyebrow {
+  margin: 0;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6b7280;
+}
+
+.hint {
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.composer {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.composer input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 16px;
+  font-family: 'Inter', sans-serif;
+  color: #2d3748;
+}
+
+.composer input::placeholder {
+  color: #9ca3af;
+}
+
+.composer button {
+  border: none;
+  background: #34d399;
+  color: #0f172a;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+
+.composer button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.composer button:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.task-item {
+  width: 100%;
+}
+
+.message {
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.empty {
+  color: #9ca3af;
+  font-size: 14px;
+  padding: 12px;
+}

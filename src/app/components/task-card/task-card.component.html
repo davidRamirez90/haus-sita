@@ -1,0 +1,14 @@
+<article class="card">
+  <span class="priority-strip" [style.backgroundColor]="priorityColor"></span>
+  <div class="content">
+    <div class="title-row">
+      <div class="title">{{ task.title }}</div>
+      <span class="owner-dot" [style.backgroundColor]="ownerColor" title="Owner"></span>
+    </div>
+    <div class="meta-row">
+      <span class="meta">{{ effortLabel }}</span>
+      <span class="meta" *ngIf="task.due_date">Due {{ task.due_date }}</span>
+      <span class="meta" *ngIf="task.planned_date && task.time_mode === 'fixed'">Planned {{ task.planned_date }}</span>
+    </div>
+  </div>
+</article>

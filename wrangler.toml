@@ -1,2 +1,8 @@
 name = "haus-sita"
 pages_build_output_dir = "dist/haus-sita/browser"
+
+[[d1_databases]]
+# Update database_name and database_id to match your D1 instance.
+binding = "MY_HAUSSITADB"
+database_name = "haussita-db"
+database_id = "dc9cfe10-4fca-44fe-92fb-846e627badc6"

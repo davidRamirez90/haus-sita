@@ -6,7 +6,8 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "deploy:pages": "npm run build && wrangler pages deploy dist/haus-sita/browser"
   },
   "prettier": {
     "overrides": [

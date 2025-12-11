@@ -168,6 +168,18 @@ export function validateNewTaskPayload(
   return { ok: true, errors: [], task };
 }
 
+export function validatePatchedTask(
+  existing: ValidatedTaskInput,
+  patch: any
+): { ok: boolean; errors: string[]; task?: ValidatedTaskInput } {
+  if (!patch || typeof patch !== 'object') {
+    return { ok: false, errors: ['Body must be a JSON object'] };
+  }
+
+  const merged = { ...existing, ...patch, id: existing.id };
+  return validateNewTaskPayload(merged, () => existing.id);
+}
+
 function asNonEmptyString(value: any): string | null {
   if (typeof value !== 'string') return null;
   const trimmed = value.trim();

@@ -1,8 +1,7 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { NgIf } from '@angular/common';
 import { Task } from '../../core/task.model';
-
-type PriorityLevel = 'none' | 'low' | 'medium' | 'high';
+import { PriorityLevel } from '../../core/priority.model';
 
 @Component({
   selector: 'app-task-card',

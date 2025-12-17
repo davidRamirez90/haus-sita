@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
 import { Task } from './task.model';
+import { PriorityLevel, TaskPriority } from './priority.model';
 
 interface TaskListResponse {
   tasks: Task[];
@@ -10,6 +11,15 @@ interface TaskListResponse {
 interface TaskResponse {
   task: Task;
 }
+
+interface TaskPrioritiesResponse {
+  priorities: TaskPriority[];
+}
+
+type TaskPriorityUpdate = {
+  user_id: string;
+  priority: PriorityLevel;
+};
 
 @Injectable({ providedIn: 'root' })
 export class TaskService {
@@ -29,6 +39,13 @@ export class TaskService {
 
   update(id: string, patch: Partial<Task>): Observable<Task> {
     return this.http.patch<TaskResponse>(`${this.baseUrl}/${id}`, patch).pipe(map((res) => res.task));
+  }
+
+  updatePriorities(id: string, updates: TaskPriorityUpdate | TaskPriorityUpdate[]): Observable<TaskPriority[]> {
+    const payload = Array.isArray(updates) ? { priorities: updates } : updates;
+    return this.http
+      .patch<TaskPrioritiesResponse>(`${this.baseUrl}/${id}/priorities`, payload)
+      .pipe(map((res) => res.priorities ?? []));
   }
 
   delete(id: string): Observable<void> {

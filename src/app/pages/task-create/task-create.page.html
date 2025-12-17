@@ -1,0 +1,129 @@
+<section class="create-task">
+  <header class="page-header">
+    <button class="back-button" type="button" (click)="cancel()">Zurück</button>
+    <div>
+      <p class="eyebrow">Neue Aufgabe</p>
+      <h1>Anlegen</h1>
+    </div>
+  </header>
+
+  <div class="message" *ngIf="error()">{{ error() }}</div>
+
+  <div class="form">
+    <div class="field">
+      <label class="field-label">Titel</label>
+      <input
+        type="text"
+        placeholder="Was muss erledigt werden?"
+        [ngModel]="newTitle()"
+        (ngModelChange)="newTitle.set($event)"
+        (keyup.enter)="addTask()"
+        [disabled]="submitting()"
+        aria-label="Aufgabentitel"
+      />
+    </div>
+
+    <div class="field-grid">
+      <div class="field">
+        <label class="field-label">Status</label>
+        <select [ngModel]="newStatus()" (ngModelChange)="newStatus.set($event)">
+          <option value="inbox">Eingang</option>
+          <option value="planned">Geplant</option>
+          <option value="today">Heute</option>
+          <option value="done">Erledigt</option>
+        </select>
+        <span class="field-note">Standardmäßig Eingang, falls nicht geändert.</span>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Aufwand</label>
+        <div class="effort-row">
+          <input
+            type="range"
+            [min]="0"
+            [max]="effortOptions.length - 1"
+            step="1"
+            [ngModel]="newEffortIndex()"
+            (ngModelChange)="setEffortIndex($event)"
+            aria-label="Aufwand in Minuten"
+          />
+          <span class="effort-value">{{ effortValue }}m</span>
+        </div>
+        <div class="effort-scale">
+          <span
+            *ngFor="let effort of effortOptions; let i = index"
+            [class.active]="i === newEffortIndex()"
+          >
+            {{ effort }}m
+          </span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Kategorie</label>
+        <select [ngModel]="newCategory() ?? ''" (ngModelChange)="setCategory($event)">
+          <option value="" disabled>Kategorie auswählen</option>
+          <option *ngFor="let category of categories()" [value]="category.id">
+            {{ category.label }}
+          </option>
+        </select>
+        <span class="field-note" *ngIf="!categories().length">Noch keine Kategorien geladen.</span>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Zeitmodus</label>
+        <select
+          [ngModel]="newTimeMode()"
+          (ngModelChange)="setTimeMode($event)"
+          title="Flexible Aufgaben können bis zum Fälligkeitsdatum erledigt werden. Fixe Aufgaben brauchen einen geplanten Tag."
+        >
+          <option value="flexible">Flexibel</option>
+          <option value="fixed">Fix</option>
+        </select>
+        <span class="field-note">Flexibel = nur Fälligkeit. Fix = geplanter Tag erforderlich.</span>
+      </div>
+
+      <div class="field" *ngIf="newTimeMode() === 'flexible'">
+        <label class="field-label">Fällig bis</label>
+        <input type="date" [ngModel]="newDueDate()" (ngModelChange)="newDueDate.set($event)" />
+      </div>
+
+      <div class="field" *ngIf="newTimeMode() === 'fixed'">
+        <label class="field-label">Geplant für</label>
+        <input type="date" [ngModel]="newPlannedDate()" (ngModelChange)="newPlannedDate.set($event)" />
+      </div>
+
+      <div class="field">
+        <label class="field-label">Projekt</label>
+        <label class="checkbox-row">
+          <input type="checkbox" [ngModel]="newIsProject()" (ngModelChange)="setIsProject($event)" />
+          <span>Diese Aufgabe ist ein Projekt</span>
+        </label>
+      </div>
+
+      <div class="field" *ngIf="!newIsProject()">
+        <label class="field-label">Übergeordnetes Projekt</label>
+        <select [ngModel]="newParentId() ?? ''" (ngModelChange)="setParentId($event)">
+          <option value="">Keins</option>
+          <option *ngFor="let project of projects()" [value]="project.id">{{ project.title }}</option>
+        </select>
+        <span class="field-note" *ngIf="!projects().length">Noch keine Projekte.</span>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Priorität (du)</label>
+        <select [ngModel]="newPriority()" (ngModelChange)="newPriority.set($event)">
+          <option value="none">Keine</option>
+          <option value="low">Niedrig</option>
+          <option value="medium">Mittel</option>
+          <option value="high">Hoch</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button type="button" class="ghost-button" (click)="cancel()" [disabled]="submitting()">Abbrechen</button>
+    <button type="button" (click)="addTask()" [disabled]="!canSubmit()">Aufgabe erstellen</button>
+  </div>
+</section>

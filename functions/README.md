@@ -26,6 +26,10 @@ The binding inside functions is `MY_HAUSSITADB`.
 - `GET /api/users/:id`: fetch a single user.
 - `PATCH /api/users/:id`: update `name` and/or `color`.
 
+## /api/categories
+
+- `GET /api/categories`: list fixed categories.
+
 Example create:
 
 ```bash

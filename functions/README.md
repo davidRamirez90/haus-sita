@@ -17,6 +17,14 @@ The binding inside functions is `MY_HAUSSITADB`.
 - `GET /api/tasks/:id`: fetch a single task.
 - `PATCH /api/tasks/:id`: partial update of mutable fields (title, description, owner, status, effort, category, time_mode, due_date, planned_date, is_project, parent_id, completed_at).
 - `DELETE /api/tasks/:id`: remove a task (cascades task_priorities via FK).
+- `PATCH /api/tasks/:id/priorities`: update per-user priorities (accepts `{ user_id, priority }` or `{ priorities: [...] }`).
+
+## /api/users
+
+- `GET /api/users`: list users.
+- `POST /api/users`: create a user (name required; optional id, color).
+- `GET /api/users/:id`: fetch a single user.
+- `PATCH /api/users/:id`: update `name` and/or `color`.
 
 Example create:
 

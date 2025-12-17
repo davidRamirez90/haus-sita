@@ -8,7 +8,7 @@
   padding: 16px 16px 96px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 18px;
 }
 
 .page-header {
@@ -19,19 +19,27 @@
 
 .page-header h1 {
   margin: 2px 0 0;
-  font-size: 24px;
-  font-weight: 600;
-  color: #1f2937;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--ios-text);
 }
 
 .back-button {
   border: none;
-  background: #f3f4f6;
-  color: #374151;
+  background: rgba(0, 122, 255, 0.12);
+  color: var(--ios-blue);
   padding: 8px 12px;
-  border-radius: 10px;
+  border-radius: 12px;
   font-weight: 600;
   cursor: pointer;
+}
+
+.back-button::before {
+  content: '‹';
+  margin-right: 6px;
+  font-size: 18px;
+  line-height: 1;
 }
 
 .eyebrow {
@@ -39,18 +47,18 @@
   font-size: 12px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #6b7280;
+  color: var(--ios-tertiary);
 }
 
 .form {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 16px;
+  background: var(--ios-surface);
+  border: 1px solid rgba(209, 209, 214, 0.7);
+  border-radius: 18px;
   padding: 16px;
-  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+  box-shadow: var(--ios-shadow);
 }
 
 .field-grid {
@@ -69,28 +77,36 @@
   font-size: 12px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #6b7280;
+  color: var(--ios-tertiary);
 }
 
 .field-note {
   font-size: 12px;
-  color: #9ca3af;
+  color: var(--ios-secondary);
 }
 
 input[type='text'],
 input[type='date'],
 select {
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
+  border: 1px solid rgba(209, 209, 214, 0.7);
+  border-radius: 12px;
   padding: 10px 12px;
   font-size: 14px;
-  font-family: 'Inter', sans-serif;
-  color: #1f2937;
-  background: #ffffff;
+  color: var(--ios-text);
+  background: var(--ios-elevated);
+  box-shadow: inset 0 1px 2px rgba(17, 24, 39, 0.04);
+  appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, #8e8e93 50%),
+    linear-gradient(135deg, #8e8e93 50%, transparent 50%);
+  background-position: calc(100% - 18px) calc(50% + 2px), calc(100% - 12px) calc(50% + 2px);
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+  padding-right: 32px;
 }
 
 input[type='text']::placeholder {
-  color: #9ca3af;
+  color: var(--ios-tertiary);
 }
 
 .effort-row {
@@ -107,7 +123,7 @@ input[type='text']::placeholder {
   min-width: 44px;
   text-align: right;
   font-weight: 600;
-  color: #111827;
+  color: var(--ios-text);
 }
 
 .effort-scale {
@@ -115,7 +131,7 @@ input[type='text']::placeholder {
   gap: 8px;
   flex-wrap: wrap;
   font-size: 12px;
-  color: #9ca3af;
+  color: var(--ios-tertiary);
 }
 
 .effort-scale span {
@@ -125,9 +141,9 @@ input[type='text']::placeholder {
 }
 
 .effort-scale span.active {
-  color: #111827;
-  border-color: #d1d5db;
-  background: #f9fafb;
+  color: var(--ios-text);
+  border-color: rgba(209, 209, 214, 0.8);
+  background: #f8f8fb;
 }
 
 .checkbox-row {
@@ -135,7 +151,7 @@ input[type='text']::placeholder {
   align-items: center;
   gap: 8px;
   font-size: 14px;
-  color: #1f2937;
+  color: var(--ios-text);
 }
 
 .actions {
@@ -144,16 +160,16 @@ input[type='text']::placeholder {
   display: flex;
   gap: 12px;
   justify-content: flex-end;
-  padding: 12px 0 0;
-  background: linear-gradient(180deg, rgba(249, 250, 251, 0) 0%, rgba(249, 250, 251, 0.9) 40%, #f9fafb 100%);
+  padding: 12px 0 calc(8px + env(safe-area-inset-bottom));
+  background: linear-gradient(180deg, rgba(242, 242, 247, 0) 0%, rgba(242, 242, 247, 0.9) 40%, #f2f2f7 100%);
 }
 
 .actions button {
   border: none;
-  background: #34d399;
-  color: #0f172a;
+  background: var(--ios-blue);
+  color: #ffffff;
   padding: 10px 16px;
-  border-radius: 10px;
+  border-radius: 12px;
   font-weight: 600;
   cursor: pointer;
 }
@@ -164,12 +180,12 @@ input[type='text']::placeholder {
 }
 
 .ghost-button {
-  background: #f3f4f6;
-  color: #374151;
+  background: rgba(0, 122, 255, 0.12);
+  color: var(--ios-blue);
 }
 
 .message {
-  color: #6b7280;
+  color: var(--ios-secondary);
   font-size: 14px;
 }
 
@@ -181,6 +197,7 @@ input[type='text']::placeholder {
 
   .actions {
     justify-content: stretch;
+    bottom: 72px;
   }
 
   .actions button {

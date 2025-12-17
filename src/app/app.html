@@ -1,19 +1,27 @@
 <div class="app-shell">
-  <header class="topbar">
+  <header class="ios-topbar">
     <div class="brand">
       <span class="brand-dot"></span>
       <span class="brand-name">Haus-sita</span>
     </div>
-    <nav class="nav">
-      <a routerLink="/today" routerLinkActive="active" class="muted">Today</a>
-      <a routerLink="/week" routerLinkActive="active" class="muted">Week</a>
-      <a routerLink="/categories" routerLinkActive="active" class="muted">Rooms</a>
-      <a routerLink="/projects" routerLinkActive="active" class="muted">Projects</a>
-      <a routerLink="/inbox" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Inbox</a>
+    <nav class="segmented-nav">
+      <a routerLink="/today" routerLinkActive="active">Heute</a>
+      <a routerLink="/week" routerLinkActive="active">Woche</a>
+      <a routerLink="/categories" routerLinkActive="active">Räume</a>
+      <a routerLink="/projects" routerLinkActive="active">Projekte</a>
+      <a routerLink="/inbox" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Eingang</a>
     </nav>
   </header>
 
   <main class="page">
     <router-outlet />
   </main>
+
+  <nav class="tabbar">
+    <a routerLink="/today" routerLinkActive="active">Heute</a>
+    <a routerLink="/week" routerLinkActive="active">Woche</a>
+    <a routerLink="/categories" routerLinkActive="active">Räume</a>
+    <a routerLink="/projects" routerLinkActive="active">Projekte</a>
+    <a routerLink="/inbox" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Eingang</a>
+  </nav>
 </div>

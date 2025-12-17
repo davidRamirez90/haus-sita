@@ -63,6 +63,18 @@ export const onRequestPatch: PagesFunction<Env> = async ({ env, request, params 
 
   const updated = validation.task;
 
+  if (Object.prototype.hasOwnProperty.call(body ?? {}, 'category')) {
+    try {
+      const categoryOk = await hasCategory(env.MY_HAUSSITADB, updated.category);
+      if (!categoryOk) {
+        return errorResponse('Invalid category', 400);
+      }
+    } catch (err) {
+      console.error(`PATCH /api/tasks/${id} category check failed`, err);
+      return errorResponse('Failed to validate category', 500);
+    }
+  }
+
   try {
     await env.MY_HAUSSITADB.prepare(
       `UPDATE tasks
@@ -130,4 +142,9 @@ async function fetchTask(db: D1Database, id: string): Promise<ValidatedTaskInput
     parent_id: row.parent_id ?? null,
     completed_at: row.completed_at ?? null,
   };
+}
+
+async function hasCategory(db: D1Database, id: string): Promise<boolean> {
+  const { results } = await db.prepare('SELECT id FROM categories WHERE id = ?').bind(id).all();
+  return Boolean(results?.[0]);
 }

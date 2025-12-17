@@ -55,6 +55,11 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   const task = validation.task;
 
   try {
+    const categoryOk = await hasCategory(env.MY_HAUSSITADB, task.category);
+    if (!categoryOk) {
+      return errorResponse('Invalid category', 400);
+    }
+
     await env.MY_HAUSSITADB.prepare(
       `INSERT INTO tasks (id, title, description, owner, status, effort, category, time_mode, due_date, planned_date, is_project, parent_id, completed_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
@@ -86,6 +91,11 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
     return errorResponse('Failed to create task', 500);
   }
 };
+
+async function hasCategory(db: D1Database, id: string): Promise<boolean> {
+  const { results } = await db.prepare('SELECT id FROM categories WHERE id = ?').bind(id).all();
+  return Boolean(results?.[0]);
+}
 
 function createId(): string {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {

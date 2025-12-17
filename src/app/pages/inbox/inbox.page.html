@@ -4,21 +4,10 @@
       <p class="eyebrow">Brain dump</p>
       <h1>Inbox</h1>
     </div>
-    <div class="hint">New tasks default to inbox, flexible timing.</div>
+    <div class="hint">Set the details up front or keep defaults and refine later.</div>
   </header>
 
-  <div class="composer">
-    <input
-      type="text"
-      placeholder="What needs doing?"
-      [ngModel]="newTitle()"
-      (ngModelChange)="newTitle.set($event)"
-      (keyup.enter)="addTask()"
-      [disabled]="submitting()"
-      aria-label="New task title"
-    />
-    <button type="button" (click)="addTask()" [disabled]="submitting()">Add</button>
-  </div>
+  <button class="new-task-button" type="button" (click)="openComposer()" *ngIf="!showComposer()">New task</button>
 
   <div class="message" *ngIf="error()">{{ error() }}</div>
   <div class="message" *ngIf="loading()">Loading…</div>
@@ -32,5 +21,126 @@
     ></app-task-card>
 
     <div class="empty" *ngIf="!tasks().length && !error()">Nothing here yet. Add the first task.</div>
+  </div>
+
+  <div class="composer-overlay" *ngIf="showComposer()" (click)="closeComposer()">
+    <div class="composer-modal" role="dialog" aria-modal="true" aria-label="Create task" (click)="$event.stopPropagation()">
+      <div class="composer-header">
+        <div>
+          <p class="eyebrow">New entry</p>
+          <h2>Create task</h2>
+        </div>
+        <button type="button" class="icon-button" (click)="closeComposer()" [disabled]="submitting()">Close</button>
+      </div>
+
+      <div class="composer">
+        <div class="field">
+          <span class="field-label">Title</span>
+          <input
+            type="text"
+            placeholder="What needs doing?"
+            [ngModel]="newTitle()"
+            (ngModelChange)="newTitle.set($event)"
+            (keyup.enter)="addTask()"
+            [disabled]="submitting()"
+            aria-label="New task title"
+          />
+        </div>
+
+        <div class="field-grid">
+          <div class="field">
+            <span class="field-label">Status</span>
+            <select [ngModel]="newStatus()" (ngModelChange)="newStatus.set($event)">
+              <option value="inbox">Inbox</option>
+              <option value="planned">Planned</option>
+              <option value="today">Today</option>
+              <option value="done">Done</option>
+            </select>
+            <span class="field-note">Defaults to inbox.</span>
+          </div>
+
+          <div class="field">
+            <span class="field-label">Effort</span>
+            <div class="effort-row">
+              <input
+                type="range"
+                min="5"
+                max="120"
+                step="5"
+                [ngModel]="newEffort()"
+                (ngModelChange)="setEffort($event)"
+                aria-label="Effort in minutes"
+              />
+              <span class="effort-value">{{ newEffort() }}m</span>
+            </div>
+          </div>
+
+          <div class="field">
+            <span class="field-label">Category</span>
+            <input
+              type="text"
+              placeholder="room.kitchen"
+              [ngModel]="newCategory()"
+              (ngModelChange)="newCategory.set($event)"
+            />
+          </div>
+
+          <div class="field">
+            <span class="field-label">Time mode</span>
+            <select
+              [ngModel]="newTimeMode()"
+              (ngModelChange)="setTimeMode($event)"
+              title="Flexible tasks can be done anytime before the due date. Fixed tasks require a planned day."
+            >
+              <option value="flexible">Flexible</option>
+              <option value="fixed">Fixed</option>
+            </select>
+            <span class="field-note">Flexible = due date only. Fixed = planned day required.</span>
+          </div>
+
+          <div class="field" *ngIf="newTimeMode() === 'flexible'">
+            <span class="field-label">Due date</span>
+            <input type="date" [ngModel]="newDueDate()" (ngModelChange)="newDueDate.set($event)" />
+          </div>
+
+          <div class="field" *ngIf="newTimeMode() === 'fixed'">
+            <span class="field-label">Planned date</span>
+            <input type="date" [ngModel]="newPlannedDate()" (ngModelChange)="newPlannedDate.set($event)" />
+          </div>
+
+          <div class="field">
+            <span class="field-label">Project</span>
+            <label class="checkbox-row">
+              <input type="checkbox" [ngModel]="newIsProject()" (ngModelChange)="setIsProject($event)" />
+              <span>This task is a project</span>
+            </label>
+          </div>
+
+          <div class="field" *ngIf="!newIsProject()">
+            <span class="field-label">Parent project</span>
+            <select [ngModel]="newParentId() ?? ''" (ngModelChange)="setParentId($event)">
+              <option value="">None</option>
+              <option *ngFor="let project of projects()" [value]="project.id">{{ project.title }}</option>
+            </select>
+            <span class="field-note" *ngIf="!projects().length">No projects yet.</span>
+          </div>
+
+          <div class="field">
+            <span class="field-label">Priority (you)</span>
+            <select [ngModel]="newPriority()" (ngModelChange)="newPriority.set($event)">
+              <option value="none">None</option>
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="composer-actions">
+          <button type="button" class="ghost-button" (click)="closeComposer()" [disabled]="submitting()">Cancel</button>
+          <button type="button" (click)="addTask()" [disabled]="!canSubmit()">Create task</button>
+        </div>
+      </div>
+    </div>
   </div>
 </section>

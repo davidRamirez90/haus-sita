@@ -33,6 +33,12 @@ export class TaskService {
       .pipe(map((res) => res.tasks ?? []));
   }
 
+  listProjects(): Observable<Task[]> {
+    return this.http
+      .get<TaskListResponse>(`${this.baseUrl}?is_project=1`)
+      .pipe(map((res) => res.tasks ?? []));
+  }
+
   create(task: Partial<Task>): Observable<Task> {
     return this.http.post<TaskResponse>(this.baseUrl, task).pipe(map((res) => res.task));
   }

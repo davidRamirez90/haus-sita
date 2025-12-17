@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import {ChangeDetectionStrategy, Component, DestroyRef, inject, OnInit, signal} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -16,6 +16,8 @@ import { Task } from '../../core/task.model';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class InboxPage implements OnInit {
+    taskService = inject(TaskService);
+    destroyRef = inject(DestroyRef);
   protected tasks = signal<Task[]>([]);
   protected loading = signal(false);
   protected error = signal<string | null>(null);
@@ -23,10 +25,9 @@ export class InboxPage implements OnInit {
   protected newTitle = signal('');
   protected submitting = signal(false);
 
-  private readonly taskService = inject(TaskService);
-
   ngOnInit(): void {
     this.loadInbox();
+    console.log('test')
   }
 
   loadInbox(): void {
@@ -37,7 +38,7 @@ export class InboxPage implements OnInit {
       .listInbox()
       .pipe(
         finalize(() => this.loading.set(false)),
-        takeUntilDestroyed()
+        takeUntilDestroyed(this.destroyRef)
       )
       .subscribe({
         next: (tasks) => this.tasks.set(tasks),
@@ -65,7 +66,7 @@ export class InboxPage implements OnInit {
       .create(payload)
       .pipe(
         finalize(() => this.submitting.set(false)),
-        takeUntilDestroyed()
+        takeUntilDestroyed(this.destroyRef)
       )
       .subscribe({
         next: (task) => {

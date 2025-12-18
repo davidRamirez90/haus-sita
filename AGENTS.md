@@ -7,6 +7,7 @@ Quick project context and workflow notes for AI/code assistants working in this 
 - Frontend source: `src/`
 - Backend/API (Pages Functions): `functions/`
 - Pages build output: `dist/haus-sita/browser` (from `wrangler.toml`)
+- Design should be IOS inspired, minimal.
 
 ## Cloudflare + Wrangler (use npx)
 Wrangler is a dev dependency. Use `npx wrangler ...` for all Wrangler commands.

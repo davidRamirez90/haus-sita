@@ -1,6 +1,5 @@
 # TODO
 
-- Add `pages_build_output_dir` back to `wrangler.toml` or keep explicit deploy command; decide based on HMR vs. warning tolerance.
 - Add remaining API routes to UI (users, priorities display, filters).
 - Implement owner selection and per-user priorities in task forms/cards.
 - Build “Today”, “Week”, “Räume”, and “Projekte” views per spec.

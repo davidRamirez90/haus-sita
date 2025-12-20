@@ -10,5 +10,11 @@
       <span class="meta" *ngIf="task.due_date">Fällig {{ task.due_date }}</span>
       <span class="meta" *ngIf="task.planned_date && task.time_mode === 'fixed'">Geplant {{ task.planned_date }}</span>
     </div>
+    <div class="priority-row" *ngIf="priorityBadges.length">
+      <span class="priority-chip" *ngFor="let item of priorityBadges">
+        <span class="priority-dot" [style.backgroundColor]="item.priorityColor"></span>
+        <span class="priority-name" [style.color]="item.userColor">{{ item.name }}</span>
+      </span>
+    </div>
   </div>
 </article>

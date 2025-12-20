@@ -1,7 +1,8 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { NgIf } from '@angular/common';
 import { Task } from '../../core/task.model';
-import { PriorityLevel } from '../../core/priority.model';
+import { PriorityLevel, TaskPriority } from '../../core/priority.model';
+import { User } from '../../core/user.model';
 
 @Component({
   selector: 'app-task-card',
@@ -14,6 +15,8 @@ import { PriorityLevel } from '../../core/priority.model';
 export class TaskCardComponent {
   @Input({ required: true }) task!: Task;
   @Input() priority: PriorityLevel = 'none';
+  @Input() priorities: TaskPriority[] = [];
+  @Input() users: User[] = [];
 
   private readonly priorityColors: Record<PriorityLevel, string> = {
     none: '#D1D5DB',
@@ -38,5 +41,21 @@ export class TaskCardComponent {
 
   get effortLabel(): string {
     return `${this.task.effort}m`;
+  }
+
+  get priorityBadges(): { id: string; name: string; priorityColor: string; userColor: string }[] {
+    if (!this.priorities.length) return [];
+
+    const userMap = new Map(this.users.map((user) => [user.id, user]));
+
+    return this.priorities.map((item) => {
+      const user = userMap.get(item.user_id);
+      return {
+        id: item.user_id,
+        name: user?.name ?? item.user_id,
+        priorityColor: this.priorityColors[item.priority] ?? this.priorityColors.none,
+        userColor: user?.color ?? '#9CA3AF'
+      };
+    });
   }
 }

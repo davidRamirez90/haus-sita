@@ -59,7 +59,12 @@
   @if (!loading()) {
     <div class="list">
       @for (task of filteredTasks(); track task.id) {
-        <app-task-card [task]="task" [priority]="'none'" class="task-item"></app-task-card>
+        <app-task-card
+          [task]="task"
+          [priorities]="taskPriorities()[task.id] ?? []"
+          [users]="users()"
+          class="task-item"
+        ></app-task-card>
       }
 
       @if (!filteredTasks().length && !error()) {

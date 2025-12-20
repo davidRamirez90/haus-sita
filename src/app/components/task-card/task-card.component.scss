@@ -68,3 +68,30 @@
   display: inline-flex;
   align-items: center;
 }
+
+.priority-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.priority-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  background: #f4f5f7;
+}
+
+.priority-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.priority-name {
+  font-size: 13px;
+  font-weight: 600;
+}

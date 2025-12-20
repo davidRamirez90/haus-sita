@@ -1,0 +1,102 @@
+<section class="week">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">Planer</p>
+      <h1>Woche</h1>
+    </div>
+    <div class="summary">{{ weekRangeLabel() }}</div>
+  </header>
+
+  @if (error()) {
+    <div class="message">{{ error() }}</div>
+  }
+
+  @if (loading()) {
+    <div class="message">Wird geladen…</div>
+  }
+
+  @if (!loading()) {
+    <section class="bucket" aria-label="Aufgaben dieser Woche ohne Tag">
+      <div class="bucket-header">
+        <h2>Diese Woche</h2>
+        <span class="bucket-note">Noch nicht zugeordnet</span>
+      </div>
+      <div class="list">
+        @for (item of weekBucket(); track item.task.id) {
+          <app-task-card
+            [task]="item.task"
+            [priority]="item.priority"
+            [priorities]="item.priorities"
+            [users]="users()"
+            class="task-item"
+          ></app-task-card>
+        }
+        @if (!weekBucket().length) {
+          <div class="empty">Alles ist bereits auf Tage verteilt.</div>
+        }
+      </div>
+    </section>
+
+    <div class="week-grid" aria-label="Wochenansicht">
+      @for (day of weekEntries(); track day.key) {
+        <section class="day-column" [class.today]="day.isToday" [attr.aria-label]="day.fullLabel">
+          <div class="day-header">
+            <div class="day-title">{{ day.label }}</div>
+            <div class="day-meta" [class.overload]="day.isOverloaded">
+              <span>Est: {{ day.effortLabel }}</span>
+              @if (day.isOverloaded) {
+                <span class="warn" role="img" aria-label="Überlastet">!</span>
+              }
+            </div>
+          </div>
+          <div class="day-list">
+            @for (item of day.tasks; track item.task.id) {
+              <app-task-card
+                [task]="item.task"
+                [priority]="item.priority"
+                [priorities]="item.priorities"
+                [users]="users()"
+                class="task-item"
+              ></app-task-card>
+            }
+            @if (!day.tasks.length) {
+              <div class="empty">Keine Aufgaben.</div>
+            }
+          </div>
+        </section>
+      }
+    </div>
+
+    <div class="week-accordion" aria-label="Wochenansicht mobil">
+      @for (day of weekEntries(); track day.key) {
+        <details class="day-accordion" [class.today]="day.isToday" [open]="day.isToday">
+          <summary>
+            <div class="day-summary">
+              <span class="day-title">{{ day.label }}</span>
+              <span class="day-meta" [class.overload]="day.isOverloaded">
+                Est: {{ day.effortLabel }}
+                @if (day.isOverloaded) {
+                  <span class="warn" role="img" aria-label="Überlastet">!</span>
+                }
+              </span>
+            </div>
+          </summary>
+          <div class="day-list">
+            @for (item of day.tasks; track item.task.id) {
+              <app-task-card
+                [task]="item.task"
+                [priority]="item.priority"
+                [priorities]="item.priorities"
+                [users]="users()"
+                class="task-item"
+              ></app-task-card>
+            }
+            @if (!day.tasks.length) {
+              <div class="empty">Keine Aufgaben.</div>
+            }
+          </div>
+        </details>
+      }
+    </div>
+  }
+</section>

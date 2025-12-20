@@ -1,0 +1,61 @@
+<section class="project-detail">
+  <header class="page-header">
+    <button class="back-button" type="button" (click)="goBack()">Zurück</button>
+    <div>
+      <p class="eyebrow">Projekt</p>
+      <h1>{{ project()?.title || 'Projekt' }}</h1>
+    </div>
+  </header>
+
+  @if (error()) {
+    <div class="message">{{ error() }}</div>
+  }
+
+  @if (loading()) {
+    <div class="message">Wird geladen…</div>
+  }
+
+  @if (project() && !loading()) {
+    @if (project()?.description) {
+      <p class="description">{{ project()?.description }}</p>
+    }
+
+    <app-progress-bar
+      [value]="completedCount()"
+      [total]="subtasks().length"
+      [label]="progressLabel()"
+    ></app-progress-bar>
+
+    <section class="checklist">
+      <div class="section-header">
+        <h2>Checklist</h2>
+        <span class="section-meta">{{ completedCount() }}/{{ subtasks().length }} erledigt</span>
+      </div>
+
+      <div class="list">
+        @for (item of subtaskCards(); track item.task.id) {
+          <app-task-card
+            [task]="item.task"
+            [priority]="item.priority"
+            [priorities]="item.priorities"
+            [users]="users()"
+            class="task-item"
+          ></app-task-card>
+        }
+        @if (!subtaskCards().length) {
+          <div class="empty">Noch keine Unteraufgaben.</div>
+        }
+      </div>
+
+      <form class="add-subtask" (submit)="addSubtask($event)">
+        <input
+          type="text"
+          [formControl]="subtaskControl"
+          placeholder="Neue Unteraufgabe..."
+          aria-label="Neue Unteraufgabe"
+        />
+        <button type="submit" [disabled]="!canSubmit()">Hinzufügen</button>
+      </form>
+    </section>
+  }
+</section>

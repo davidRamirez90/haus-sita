@@ -1,7 +1,5 @@
 # TODO
 
-- Add remaining API routes to UI (users, priorities display, filters).
-- Implement owner selection and per-user priorities in task forms/cards.
 - Build “Today”, “Week”, “Räume”, and “Projekte” views per spec.
 - Add filters/sorting (status, category, due/planned) to Inbox.
 - Wire category filters using `/api/categories` and DB-backed list.

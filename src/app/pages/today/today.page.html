@@ -1,0 +1,45 @@
+<section class="today">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">Dashboard</p>
+      <h1>{{ greetingLine() }}</h1>
+    </div>
+    <div class="summary" aria-label="Überblick">
+      <span class="summary-label">Heutiger Plan</span>
+      <span class="summary-value">~{{ totalEffortLabel() }} Gesamtaufwand</span>
+    </div>
+  </header>
+
+  @if (error()) {
+    <div class="message">{{ error() }}</div>
+  }
+
+  @if (loading()) {
+    <div class="message">Wird geladen…</div>
+  }
+
+  @if (!loading()) {
+    @for (section of sections(); track section.id) {
+      <section class="task-section" [attr.aria-labelledby]="section.id">
+        <div class="section-header">
+          <h2 [id]="section.id">{{ section.title }}</h2>
+          <span class="section-meta">{{ section.tasks.length }} Aufgaben</span>
+        </div>
+        <div class="list">
+          @for (item of section.tasks; track item.task.id) {
+            <app-task-card
+              [task]="item.task"
+              [priority]="item.priority"
+              [priorities]="item.priorities"
+              [users]="users()"
+              class="task-item"
+            ></app-task-card>
+          }
+          @if (!section.tasks.length) {
+            <div class="empty">{{ section.emptyMessage }}</div>
+          }
+        </div>
+      </section>
+    }
+  }
+</section>

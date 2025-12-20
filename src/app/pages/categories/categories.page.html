@@ -1,0 +1,52 @@
+<section class="categories">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">Räume</p>
+      <h1>Räume</h1>
+    </div>
+    <label class="toggle">
+      <input type="checkbox" role="switch" [checked]="showCompleted()" (change)="toggleCompleted($event)" />
+      <span>Erledigte anzeigen</span>
+    </label>
+  </header>
+
+  <div class="chip-row" aria-label="Raumfilter">
+    @for (category of categories(); track category.id) {
+      <app-category-chip
+        [label]="category.label"
+        [active]="category.id === selectedCategoryId()"
+        (selected)="selectCategory(category.id)"
+      ></app-category-chip>
+    }
+  </div>
+
+  <div class="section-header">
+    <h2>{{ selectedCategoryLabel() }}</h2>
+    <span class="section-meta">{{ visibleTasks().length }} Aufgaben</span>
+  </div>
+
+  @if (error()) {
+    <div class="message">{{ error() }}</div>
+  }
+
+  @if (loading()) {
+    <div class="message">Wird geladen…</div>
+  }
+
+  @if (!loading()) {
+    <div class="list">
+      @for (item of visibleTasks(); track item.task.id) {
+        <app-task-card
+          [task]="item.task"
+          [priority]="item.priority"
+          [priorities]="item.priorities"
+          [users]="users()"
+          class="task-item"
+        ></app-task-card>
+      }
+      @if (!visibleTasks().length) {
+        <div class="empty">Keine Aufgaben in diesem Raum.</div>
+      }
+    </div>
+  }
+</section>

@@ -28,6 +28,8 @@ export type TaskListFilters = Partial<{
   time_mode: string;
   due_before: string;
   planned_for: string;
+  parent_id: string;
+  is_project: 0 | 1 | boolean;
   limit: number;
   offset: number;
 }>;
@@ -47,6 +49,10 @@ export class TaskService {
     if (filters.time_mode) params = params.set('time_mode', filters.time_mode);
     if (filters.due_before) params = params.set('due_before', filters.due_before);
     if (filters.planned_for) params = params.set('planned_for', filters.planned_for);
+    if (filters.parent_id) params = params.set('parent_id', filters.parent_id);
+    if (typeof filters.is_project !== 'undefined') {
+      params = params.set('is_project', filters.is_project ? '1' : '0');
+    }
     if (typeof filters.limit === 'number') params = params.set('limit', filters.limit);
     if (typeof filters.offset === 'number') params = params.set('offset', filters.offset);
 
@@ -59,9 +65,11 @@ export class TaskService {
   }
 
   listProjects(): Observable<Task[]> {
-    return this.http
-      .get<TaskListResponse>(`${this.baseUrl}?is_project=1`)
-      .pipe(map((res) => res.tasks ?? []));
+    return this.list({ is_project: 1, limit: 200 });
+  }
+
+  get(id: string): Observable<Task> {
+    return this.http.get<TaskResponse>(`${this.baseUrl}/${id}`).pipe(map((res) => res.task));
   }
 
   create(task: Partial<Task>): Observable<Task> {

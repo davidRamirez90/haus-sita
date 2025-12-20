@@ -1,0 +1,44 @@
+<section class="projects">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">Überblick</p>
+      <h1>Projekte</h1>
+    </div>
+    <div class="summary">{{ activeCount() }} aktiv</div>
+  </header>
+
+  @if (error()) {
+    <div class="message">{{ error() }}</div>
+  }
+
+  @if (loading()) {
+    <div class="message">Wird geladen…</div>
+  }
+
+  @if (!loading()) {
+    <div class="project-grid">
+      @for (project of projectCards(); track project.id) {
+        <a class="project-card" [routerLink]="['/projects', project.id]">
+          <div class="card-header">
+            <h2>{{ project.title }}</h2>
+            @if (project.categoryLabel) {
+              <span class="category-chip">{{ project.categoryLabel }}</span>
+            }
+          </div>
+          @if (project.description) {
+            <p class="description">{{ project.description }}</p>
+          }
+          <app-progress-bar
+            [value]="project.completed"
+            [total]="project.total"
+            [label]="project.progressLabel"
+          ></app-progress-bar>
+          <div class="meta">{{ project.total }} Aufgaben</div>
+        </a>
+      }
+    </div>
+    @if (!projectCards().length) {
+      <div class="empty">Noch keine Projekte angelegt.</div>
+    }
+  }
+</section>

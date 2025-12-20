@@ -9,17 +9,62 @@
 
   <a class="new-task-button" [routerLink]="'/tasks/new'" [queryParams]="{ returnUrl: '/inbox' }">Neue Aufgabe</a>
 
-  <div class="message" *ngIf="error()">{{ error() }}</div>
-  <div class="message" *ngIf="loading()">Wird geladen…</div>
+  <section class="controls" aria-label="Filter und Sortierung">
+    <label class="control">
+      <span class="label">Status</span>
+      <select [value]="statusFilter()" (change)="onStatusChange($event)">
+        @for (option of statusOptions; track option.value) {
+          <option [value]="option.value">{{ option.label }}</option>
+        }
+      </select>
+    </label>
 
-  <div class="list" *ngIf="!loading()">
-    <app-task-card
-      *ngFor="let task of tasks()"
-      [task]="task"
-      [priority]="'none'"
-      class="task-item"
-    ></app-task-card>
+    <label class="control">
+      <span class="label">Kategorie</span>
+      <select [value]="categoryFilter()" (change)="onCategoryChange($event)">
+        <option value="all">Alle Kategorien</option>
+        @for (category of categories(); track category.id) {
+          <option [value]="category.id">{{ category.label }}</option>
+        }
+      </select>
+    </label>
 
-    <div class="empty" *ngIf="!tasks().length && !error()">Noch nichts hier. Füge die erste Aufgabe hinzu.</div>
-  </div>
+    <label class="control">
+      <span class="label">Datum</span>
+      <select [value]="dateFilter()" (change)="onDateFilterChange($event)">
+        @for (filter of dateFilters; track filter.value) {
+          <option [value]="filter.value">{{ filter.label }}</option>
+        }
+      </select>
+    </label>
+
+    <label class="control">
+      <span class="label">Sortieren</span>
+      <select [value]="sortMode()" (change)="onSortChange($event)">
+        @for (option of sortOptions; track option.value) {
+          <option [value]="option.value">{{ option.label }}</option>
+        }
+      </select>
+    </label>
+  </section>
+
+  @if (error()) {
+    <div class="message">{{ error() }}</div>
+  }
+
+  @if (loading()) {
+    <div class="message">Wird geladen…</div>
+  }
+
+  @if (!loading()) {
+    <div class="list">
+      @for (task of filteredTasks(); track task.id) {
+        <app-task-card [task]="task" [priority]="'none'" class="task-item"></app-task-card>
+      }
+
+      @if (!filteredTasks().length && !error()) {
+        <div class="empty">Noch nichts hier. Füge die erste Aufgabe hinzu.</div>
+      }
+    </div>
+  }
 </section>

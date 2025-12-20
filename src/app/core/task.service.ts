@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
-import { Task } from './task.model';
+import { Task, TaskStatus } from './task.model';
 import { PriorityLevel, TaskPriority } from './priority.model';
 
 interface TaskListResponse {
@@ -21,16 +21,41 @@ type TaskPriorityUpdate = {
   priority: PriorityLevel;
 };
 
+export type TaskListFilters = Partial<{
+  status: TaskStatus | 'all';
+  owner: string;
+  category: string;
+  time_mode: string;
+  due_before: string;
+  planned_for: string;
+  limit: number;
+  offset: number;
+}>;
+
 @Injectable({ providedIn: 'root' })
 export class TaskService {
   private readonly baseUrl = '/api/tasks';
 
   constructor(private readonly http: HttpClient) {}
 
-  listInbox(): Observable<Task[]> {
-    return this.http
-      .get<TaskListResponse>(`${this.baseUrl}?status=inbox`)
-      .pipe(map((res) => res.tasks ?? []));
+  list(filters: TaskListFilters = {}): Observable<Task[]> {
+    let params = new HttpParams();
+
+    if (filters.status && filters.status !== 'all') params = params.set('status', filters.status);
+    if (filters.owner) params = params.set('owner', filters.owner);
+    if (filters.category) params = params.set('category', filters.category);
+    if (filters.time_mode) params = params.set('time_mode', filters.time_mode);
+    if (filters.due_before) params = params.set('due_before', filters.due_before);
+    if (filters.planned_for) params = params.set('planned_for', filters.planned_for);
+    if (typeof filters.limit === 'number') params = params.set('limit', filters.limit);
+    if (typeof filters.offset === 'number') params = params.set('offset', filters.offset);
+
+    return this.http.get<TaskListResponse>(this.baseUrl, { params }).pipe(map((res) => res.tasks ?? []));
+  }
+
+  listInbox(filters: TaskListFilters = {}): Observable<Task[]> {
+    const status = filters.status ?? 'inbox';
+    return this.list({ ...filters, status });
   }
 
   listProjects(): Observable<Task[]> {

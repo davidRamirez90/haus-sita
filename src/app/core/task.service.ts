@@ -72,6 +72,12 @@ export class TaskService {
     return this.http.patch<TaskResponse>(`${this.baseUrl}/${id}`, patch).pipe(map((res) => res.task));
   }
 
+  getPriorities(id: string): Observable<TaskPriority[]> {
+    return this.http
+      .get<TaskPrioritiesResponse>(`${this.baseUrl}/${id}/priorities`)
+      .pipe(map((res) => res.priorities ?? []));
+  }
+
   updatePriorities(id: string, updates: TaskPriorityUpdate | TaskPriorityUpdate[]): Observable<TaskPriority[]> {
     const payload = Array.isArray(updates) ? { priorities: updates } : updates;
     return this.http

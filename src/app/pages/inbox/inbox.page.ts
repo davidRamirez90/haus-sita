@@ -2,12 +2,15 @@ import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, signa
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { finalize } from 'rxjs';
+import { catchError, finalize, forkJoin, map, of } from 'rxjs';
 import { TaskCardComponent } from '../../components/task-card/task-card.component';
 import { CategoryService } from '../../core/category.service';
 import { TaskListFilters, TaskService } from '../../core/task.service';
 import { Task, TaskStatus } from '../../core/task.model';
 import { Category } from '../../core/category.model';
+import { UserService } from '../../core/user.service';
+import { User } from '../../core/user.model';
+import { TaskPriority } from '../../core/priority.model';
 
 @Component({
   selector: 'app-inbox-page',
@@ -21,11 +24,14 @@ export class InboxPage implements OnInit {
   constructor(
     private readonly taskService: TaskService,
     private readonly categoryService: CategoryService,
+    private readonly userService: UserService,
     private readonly destroyRef: DestroyRef
   ) {}
 
   protected tasks = signal<Task[]>([]);
   protected categories = signal<Category[]>([]);
+  protected users = signal<User[]>([]);
+  protected taskPriorities = signal<Record<string, TaskPriority[]>>({});
   protected loading = signal(false);
   protected error = signal<string | null>(null);
 
@@ -84,6 +90,7 @@ export class InboxPage implements OnInit {
     this.loadFilters();
     this.loadInbox();
     this.loadCategories();
+    this.loadUsers();
   }
 
   loadInbox(): void {
@@ -109,7 +116,10 @@ export class InboxPage implements OnInit {
         takeUntilDestroyed(this.destroyRef)
       )
       .subscribe({
-        next: (tasks) => this.tasks.set(tasks),
+        next: (tasks) => {
+          this.tasks.set(tasks);
+          this.fetchPriorities(tasks);
+        },
         error: () => this.error.set('Aufgaben konnten nicht geladen werden')
       });
   }
@@ -119,6 +129,16 @@ export class InboxPage implements OnInit {
       .list()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((categories) => this.categories.set(categories));
+  }
+
+  loadUsers(): void {
+    this.userService
+      .list()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (users) => this.users.set(users),
+        error: () => this.error.set('Nutzer konnten nicht geladen werden')
+      });
   }
 
   onStatusChange(event: Event): void {
@@ -184,5 +204,32 @@ export class InboxPage implements OnInit {
     this.categoryFilter.set('all');
     this.dateFilter.set('any');
     this.sortMode.set('created');
+  }
+
+  private fetchPriorities(tasks: Task[]): void {
+    const ids = tasks.map((task) => task.id);
+    if (!ids.length) {
+      this.taskPriorities.set({});
+      return;
+    }
+
+    forkJoin(
+      ids.map((id) =>
+        this.taskService
+          .getPriorities(id)
+          .pipe(
+            map((list) => ({ id, list })),
+            catchError(() => of({ id, list: [] as TaskPriority[] }))
+          )
+      )
+    )
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((entries) => {
+        const next: Record<string, TaskPriority[]> = {};
+        for (const entry of entries) {
+          next[entry.id] = entry.list;
+        }
+        this.taskPriorities.set(next);
+      });
   }
 }

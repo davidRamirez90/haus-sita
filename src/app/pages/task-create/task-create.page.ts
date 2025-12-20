@@ -6,9 +6,11 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, finalize, map, of, switchMap } from 'rxjs';
 import { TaskService } from '../../core/task.service';
 import { CategoryService } from '../../core/category.service';
-import { Task, TaskStatus, TaskTimeMode } from '../../core/task.model';
+import { Task, TaskOwner, TaskStatus, TaskTimeMode } from '../../core/task.model';
 import { Category } from '../../core/category.model';
 import { PriorityLevel } from '../../core/priority.model';
+import { UserService } from '../../core/user.service';
+import { User } from '../../core/user.model';
 
 const EFFORT_OPTIONS = [5, 10, 15, 30, 45, 60, 90, 120];
 
@@ -24,6 +26,7 @@ export class TaskCreatePage implements OnInit {
   constructor(
     private readonly taskService: TaskService,
     private readonly categoryService: CategoryService,
+    private readonly userService: UserService,
     private readonly route: ActivatedRoute,
     private readonly router: Router,
     private readonly destroyRef: DestroyRef
@@ -31,9 +34,11 @@ export class TaskCreatePage implements OnInit {
 
   protected categories = signal<Category[]>([]);
   protected projects = signal<Task[]>([]);
+  protected users = signal<User[]>([]);
   protected error = signal<string | null>(null);
 
   protected newTitle = signal('');
+  protected newOwner = signal<TaskOwner>('both');
   protected newStatus = signal<TaskStatus>('inbox');
   protected newEffortIndex = signal(2);
   protected newCategory = signal<string | null>(null);
@@ -43,6 +48,7 @@ export class TaskCreatePage implements OnInit {
   protected newIsProject = signal(false);
   protected newParentId = signal<string | null>(null);
   protected newPriority = signal<PriorityLevel>('none');
+  protected userPriorities = signal<Record<string, PriorityLevel>>({});
   protected submitting = signal(false);
 
   private readonly currentUserId = 'you';
@@ -60,6 +66,7 @@ export class TaskCreatePage implements OnInit {
     this.returnUrl = this.resolveReturnUrl(this.route.snapshot.queryParamMap.get('returnUrl'));
     this.loadCategories();
     this.loadProjects();
+    this.loadUsers();
   }
 
   loadCategories(): void {
@@ -87,6 +94,19 @@ export class TaskCreatePage implements OnInit {
       });
   }
 
+  loadUsers(): void {
+    this.userService
+      .list()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (users) => {
+          this.users.set(users);
+          this.ensurePriorityDefaults(users);
+        },
+        error: () => this.error.set('Nutzer konnten nicht geladen werden')
+      });
+  }
+
   setEffortIndex(value: number | string): void {
     const parsed = Number(value);
     if (!Number.isFinite(parsed)) return;
@@ -110,6 +130,10 @@ export class TaskCreatePage implements OnInit {
     }
   }
 
+  setOwner(owner: TaskOwner): void {
+    this.newOwner.set(owner);
+  }
+
   setParentId(parentId: string): void {
     const normalized = parentId?.trim() || null;
     this.newParentId.set(normalized);
@@ -121,6 +145,18 @@ export class TaskCreatePage implements OnInit {
   setCategory(categoryId: string): void {
     const normalized = categoryId?.trim() || null;
     this.newCategory.set(normalized);
+  }
+
+  setUserPriority(userId: string, priority: PriorityLevel): void {
+    const trimmedId = userId?.trim();
+    if (!trimmedId) return;
+
+    this.userPriorities.update((current) => ({ ...current, [trimmedId]: priority }));
+  }
+
+  setSelfPriority(priority: PriorityLevel): void {
+    this.newPriority.set(priority);
+    this.setUserPriority(this.currentUserId, priority);
   }
 
   canSubmit(): boolean {
@@ -158,7 +194,7 @@ export class TaskCreatePage implements OnInit {
     const payload: Partial<Task> = {
       title,
       description: null,
-      owner: 'both',
+      owner: this.newOwner(),
       status: this.newStatus(),
       effort: this.effortValue,
       category,
@@ -171,16 +207,20 @@ export class TaskCreatePage implements OnInit {
     };
 
     const priority = this.newPriority();
+    const priorityUpdates = this.buildPriorityUpdates();
 
     this.taskService
       .create(payload)
       .pipe(
         switchMap((task) => {
-          if (priority === 'none') {
+          if (priority === 'none' && !priorityUpdates.length) {
             return of(task);
           }
+          const updates = priorityUpdates.length
+            ? priorityUpdates
+            : [{ user_id: this.currentUserId, priority }];
           return this.taskService
-            .updatePriorities(task.id, { user_id: this.currentUserId, priority })
+            .updatePriorities(task.id, updates)
             .pipe(
               map(() => task),
               catchError(() => of(task))
@@ -212,5 +252,24 @@ export class TaskCreatePage implements OnInit {
   private normalizeDate(value: string | null): string | null {
     const trimmed = value?.trim();
     return trimmed ? trimmed : null;
+  }
+
+  private ensurePriorityDefaults(users: User[]): void {
+    const current = this.userPriorities();
+    const next: Record<string, PriorityLevel> = { ...current };
+
+    for (const user of users) {
+      if (!next[user.id]) {
+        next[user.id] = 'none';
+      }
+    }
+
+    this.userPriorities.set(next);
+  }
+
+  private buildPriorityUpdates(): { user_id: string; priority: PriorityLevel }[] {
+    return Object.entries(this.userPriorities())
+      .filter(([, priority]) => priority !== 'none')
+      .map(([userId, priority]) => ({ user_id: userId, priority }));
   }
 }

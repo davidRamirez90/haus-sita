@@ -77,6 +77,27 @@ export const onRequestPatch: PagesFunction<Env> = async ({ env, request, params 
   }
 };
 
+export const onRequestGet: PagesFunction<Env> = async ({ env, params }) => {
+  const id = params?.id;
+  if (!id) return errorResponse('Task id is required', 400);
+
+  const taskExists = await hasTask(env.MY_HAUSSITADB, id);
+  if (!taskExists) return errorResponse('Task not found', 404);
+
+  try {
+    const { results } = await env.MY_HAUSSITADB.prepare(
+      'SELECT * FROM task_priorities WHERE task_id = ? ORDER BY user_id ASC'
+    )
+      .bind(id)
+      .all();
+
+    return jsonResponse({ priorities: results ?? [] });
+  } catch (err) {
+    console.error(`GET /api/tasks/${id}/priorities failed`, err);
+    return errorResponse('Failed to fetch priorities', 500);
+  }
+};
+
 async function hasTask(db: D1Database, id: string): Promise<boolean> {
   const { results } = await db.prepare('SELECT id FROM tasks WHERE id = ?').bind(id).all();
   return Boolean(results?.[0]);

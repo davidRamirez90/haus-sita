@@ -36,6 +36,15 @@
       </div>
 
       <div class="field">
+        <label class="field-label">Verantwortlich</label>
+        <select [ngModel]="newOwner()" (ngModelChange)="setOwner($event)">
+          <option value="both">Beide</option>
+          <option value="you">Du</option>
+          <option value="partner">Partner</option>
+        </select>
+      </div>
+
+      <div class="field">
         <label class="field-label">Aufwand</label>
         <div class="effort-row">
           <input
@@ -112,12 +121,29 @@
 
       <div class="field">
         <label class="field-label">Priorität (du)</label>
-        <select [ngModel]="newPriority()" (ngModelChange)="newPriority.set($event)">
+        <select [ngModel]="newPriority()" (ngModelChange)="setSelfPriority($event)">
           <option value="none">Keine</option>
           <option value="low">Niedrig</option>
           <option value="medium">Mittel</option>
           <option value="high">Hoch</option>
         </select>
+      </div>
+
+      <div class="field" *ngIf="users().length">
+        <label class="field-label">Prioritäten je Person</label>
+        <div class="user-priority" *ngFor="let user of users()">
+          <div class="user-pill" [style.backgroundColor]="user.color || '#E5E7EB'">{{ user.name }}</div>
+          <select
+            [ngModel]="userPriorities()[user.id] ?? 'none'"
+            (ngModelChange)="setUserPriority(user.id, $event)"
+            aria-label="Priorität für {{ user.name }}"
+          >
+            <option value="none">Keine</option>
+            <option value="low">Niedrig</option>
+            <option value="medium">Mittel</option>
+            <option value="high">Hoch</option>
+          </select>
+        </div>
       </div>
     </div>
   </div>

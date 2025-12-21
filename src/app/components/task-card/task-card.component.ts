@@ -6,7 +6,6 @@ import { User } from '../../core/user.model';
 
 @Component({
   selector: 'app-task-card',
-  standalone: true,
   imports: [NgIf],
   templateUrl: './task-card.component.html',
   styleUrls: ['./task-card.component.scss'],
@@ -25,7 +24,7 @@ export class TaskCardComponent {
     high: '#F87171'
   };
 
-  private readonly ownerColors: Record<Task['owner'], string> = {
+  private readonly ownerColors: Record<'you' | 'partner' | 'both', string> = {
     you: '#818CF8',
     partner: '#2DD4BF',
     both: '#10B981'
@@ -35,12 +34,19 @@ export class TaskCardComponent {
     return this.priorityColors[this.priority] ?? this.priorityColors.none;
   }
 
+  get isUnassigned(): boolean {
+    return this.task.owner === null || typeof this.task.owner === 'undefined';
+  }
+
   get ownerColor(): string {
-    return this.ownerColors[this.task.owner] ?? this.ownerColors.you;
+    if (this.isUnassigned) return '#D1D5DB';
+    return this.ownerColors[this.task.owner ?? 'you'] ?? this.ownerColors.you;
   }
 
   get effortLabel(): string {
-    return `${this.task.effort}m`;
+    const effort = this.task.effort;
+    if (typeof effort === 'number' && effort > 0) return `${effort}m`;
+    return '–';
   }
 
   get priorityBadges(): { id: string; name: string; priorityColor: string; userColor: string }[] {

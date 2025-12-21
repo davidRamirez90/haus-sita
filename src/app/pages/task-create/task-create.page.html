@@ -32,15 +32,15 @@
           <option value="today">Heute</option>
           <option value="done">Erledigt</option>
         </select>
-        <span class="field-note">Standardmäßig Eingang, falls nicht geändert.</span>
       </div>
 
       <div class="field">
         <label class="field-label">Verantwortlich</label>
         <select [ngModel]="newOwner()" (ngModelChange)="setOwner($event)">
-          <option value="both">Beide</option>
-          <option value="you">Du</option>
-          <option value="partner">Partner</option>
+          <option [ngValue]="null">Nicht zugewiesen</option>
+          <option [ngValue]="'both'">Beide</option>
+          <option [ngValue]="'you'">Du</option>
+          <option [ngValue]="'partner'">Partner</option>
         </select>
       </div>
 
@@ -86,10 +86,10 @@
           (ngModelChange)="setTimeMode($event)"
           title="Flexible Aufgaben können bis zum Fälligkeitsdatum erledigt werden. Fixe Aufgaben brauchen einen geplanten Tag."
         >
-          <option value="flexible">Flexibel</option>
-          <option value="fixed">Fix</option>
+          <option [ngValue]="null">Kein Zeitplan</option>
+          <option [ngValue]="'flexible'">Flexibel</option>
+          <option [ngValue]="'fixed'">Fix</option>
         </select>
-        <span class="field-note">Flexibel = nur Fälligkeit. Fix = geplanter Tag erforderlich.</span>
       </div>
 
       <div class="field" *ngIf="newTimeMode() === 'flexible'">

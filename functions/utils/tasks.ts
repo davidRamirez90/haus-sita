@@ -6,11 +6,11 @@ export interface ValidatedTaskInput {
   id: string;
   title: string;
   description: string | null;
-  owner: Owner;
+  owner: Owner | null;
   status: TaskStatus;
-  effort: number;
-  category: string;
-  time_mode: TimeMode;
+  effort: number | null;
+  category: string | null;
+  time_mode: TimeMode | null;
   due_date: string | null;
   planned_date: string | null;
   is_project: number;
@@ -118,20 +118,32 @@ export function validateNewTaskPayload(
   const title = asNonEmptyString(body.title);
   if (!title) errors.push('title is required');
 
-  const owner = body.owner as Owner;
-  if (!OWNER_VALUES.includes(owner)) errors.push('owner must be you|partner|both');
+  const ownerInput = body.owner;
+  const owner = optionalEnum(ownerInput, OWNER_VALUES);
+  if (ownerInput !== undefined && ownerInput !== null && owner === null) errors.push('owner must be you|partner|both');
 
-  const status = body.status as TaskStatus;
-  if (!STATUS_VALUES.includes(status)) errors.push('status must be inbox|planned|today|done');
+  const statusInput = body.status as TaskStatus | undefined;
+  const status = STATUS_VALUES.includes(statusInput as TaskStatus) ? (statusInput as TaskStatus) : 'inbox';
+  if (typeof body.status !== 'undefined' && status !== body.status) {
+    errors.push('status must be inbox|planned|today|done');
+  }
 
-  const effort = Number(body.effort);
-  if (!Number.isInteger(effort) || effort <= 0) errors.push('effort must be a positive integer (minutes)');
+  const effortInput = body.effort;
+  let effortValue: number | null = null;
+  if (effortInput !== undefined && effortInput !== null) {
+    const effort = Number(effortInput);
+    if (!Number.isInteger(effort) || effort <= 0) {
+      errors.push('effort must be a positive integer (minutes)');
+    } else {
+      effortValue = Math.trunc(effort);
+    }
+  }
 
   const category = asNonEmptyString(body.category);
-  if (!category) errors.push('category is required');
 
-  const timeMode = body.time_mode as TimeMode;
-  if (!TIME_MODE_VALUES.includes(timeMode)) errors.push('time_mode must be flexible|fixed');
+  const timeModeInput = body.time_mode;
+  const timeMode = optionalEnum(timeModeInput, TIME_MODE_VALUES);
+  if (timeModeInput !== undefined && timeModeInput !== null && timeMode === null) errors.push('time_mode must be flexible|fixed');
 
   const isProject = asBooleanInt(body.is_project);
   const parentId = asNonEmptyString(body.parent_id);
@@ -155,11 +167,11 @@ export function validateNewTaskPayload(
     description,
     owner,
     status,
-    effort,
+    effort: effortValue ?? null,
     category,
     time_mode: timeMode,
-    due_date: dueDate,
-    planned_date: plannedDate,
+    due_date: timeMode === 'fixed' ? null : dueDate,
+    planned_date: timeMode === 'fixed' ? plannedDate : null,
     is_project: isProject,
     parent_id: parentId,
     completed_at: completedAt,
@@ -184,6 +196,12 @@ function asNonEmptyString(value: any): string | null {
   if (typeof value !== 'string') return null;
   const trimmed = value.trim();
   return trimmed.length ? trimmed : null;
+}
+
+function optionalEnum<T extends string>(value: any, allowed: readonly T[]): T | null {
+  if (value === null || typeof value === 'undefined') return null;
+  if (typeof value === 'string' && allowed.includes(value as T)) return value as T;
+  return null;
 }
 
 function asBooleanInt(value: any): number {

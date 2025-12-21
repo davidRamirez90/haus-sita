@@ -16,7 +16,6 @@ const EFFORT_OPTIONS = [5, 10, 15, 30, 45, 60, 90, 120];
 
 @Component({
   selector: 'app-task-create-page',
-  standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './task-create.page.html',
   styleUrls: ['./task-create.page.scss'],
@@ -38,11 +37,11 @@ export class TaskCreatePage implements OnInit {
   protected error = signal<string | null>(null);
 
   protected newTitle = signal('');
-  protected newOwner = signal<TaskOwner>('both');
+  protected newOwner = signal<TaskOwner | null>(null);
   protected newStatus = signal<TaskStatus>('inbox');
   protected newEffortIndex = signal(2);
   protected newCategory = signal<string | null>(null);
-  protected newTimeMode = signal<TaskTimeMode>('flexible');
+  protected newTimeMode = signal<TaskTimeMode | null>(null);
   protected newDueDate = signal<string | null>(null);
   protected newPlannedDate = signal<string | null>(null);
   protected newIsProject = signal(false);
@@ -74,12 +73,7 @@ export class TaskCreatePage implements OnInit {
       .list()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (categories) => {
-          this.categories.set(categories);
-          if (!this.newCategory() && categories.length) {
-            this.newCategory.set(categories[0].id);
-          }
-        },
+        next: (categories) => this.categories.set(categories),
         error: () => this.error.set('Kategorien konnten nicht geladen werden')
       });
   }
@@ -114,8 +108,8 @@ export class TaskCreatePage implements OnInit {
     this.newEffortIndex.set(clamped);
   }
 
-  setTimeMode(mode: TaskTimeMode): void {
-    this.newTimeMode.set(mode);
+  setTimeMode(mode: TaskTimeMode | null): void {
+    this.newTimeMode.set(mode ?? null);
     if (mode === 'fixed') {
       this.newDueDate.set(null);
     } else {
@@ -130,8 +124,8 @@ export class TaskCreatePage implements OnInit {
     }
   }
 
-  setOwner(owner: TaskOwner): void {
-    this.newOwner.set(owner);
+  setOwner(owner: TaskOwner | null): void {
+    this.newOwner.set(owner ?? null);
   }
 
   setParentId(parentId: string): void {
@@ -163,21 +157,15 @@ export class TaskCreatePage implements OnInit {
     if (this.submitting()) return false;
     const title = this.newTitle().trim();
     if (!title) return false;
-    if (!this.newCategory()) return false;
     if (this.newTimeMode() === 'fixed' && !this.newPlannedDate()) return false;
     return true;
   }
 
   addTask(): void {
     const title = this.newTitle().trim();
-    const category = this.newCategory();
     const timeMode = this.newTimeMode();
 
     if (!title || this.submitting()) return;
-    if (!category) {
-      this.error.set('Kategorie ist erforderlich');
-      return;
-    }
     if (timeMode === 'fixed' && !this.newPlannedDate()) {
       this.error.set('Geplantes Datum ist für fixe Aufgaben erforderlich');
       return;
@@ -197,7 +185,7 @@ export class TaskCreatePage implements OnInit {
       owner: this.newOwner(),
       status: this.newStatus(),
       effort: this.effortValue,
-      category,
+      category: this.newCategory(),
       time_mode: timeMode,
       due_date: dueDate,
       planned_date: plannedDate,

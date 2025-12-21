@@ -55,9 +55,11 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   const task = validation.task;
 
   try {
-    const categoryOk = await hasCategory(env.MY_HAUSSITADB, task.category);
-    if (!categoryOk) {
-      return errorResponse('Invalid category', 400);
+    if (task.category) {
+      const categoryOk = await hasCategory(env.MY_HAUSSITADB, task.category);
+      if (!categoryOk) {
+        return errorResponse('Invalid category', 400);
+      }
     }
 
     await env.MY_HAUSSITADB.prepare(

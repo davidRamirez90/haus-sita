@@ -56,6 +56,11 @@
   display: inline-block;
 }
 
+.owner-label {
+  font-size: 13px;
+  color: var(--ios-secondary);
+}
+
 .meta-row {
   display: flex;
   align-items: center;

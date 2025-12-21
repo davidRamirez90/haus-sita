@@ -65,4 +65,40 @@ export class TaskCardComponent {
       };
     });
   });
+
+  readonly missingOwner = computed(() => this.isUnassigned());
+
+  readonly missingScheduling = computed(() => {
+    const task = this.task();
+    if (!task.time_mode) return true;
+    if (task.time_mode === 'flexible') return !task.due_date;
+    if (task.time_mode === 'fixed') return !task.planned_date;
+    return false;
+  });
+
+  readonly missingCategory = computed(
+    () => this.task().category === null || typeof this.task().category === 'undefined'
+  );
+
+  readonly needsAttention = computed(
+    () => this.missingOwner() || this.missingScheduling() || this.missingCategory()
+  );
+
+  readonly attentionChips = computed(() => {
+    const chips: { label: string; icon: string }[] = [];
+
+    if (this.missingOwner()) {
+      chips.push({ label: 'Keine Zuordnung', icon: '👤' });
+    }
+
+    if (this.missingScheduling()) {
+      chips.push({ label: 'Kein Datum', icon: '📅' });
+    }
+
+    if (this.missingCategory()) {
+      chips.push({ label: 'Keine Kategorie', icon: '🏷️' });
+    }
+
+    return chips;
+  });
 }

@@ -1,8 +1,8 @@
 # TODO
 
 ## Inbox + triage (no filters)
-- Rework `src/app/pages/inbox/` into a triage view (no filter controls). Load tasks without client-side filters and group into sections in this priority order: Unassigned (owner == null) -> Missing scheduling (time_mode == null OR required date missing) -> Missing category (category == null) -> Ready for planning. Each task appears only in the first matching section. Add clear empty states per section.
-- Add visual attention cues in the inbox: small icon chips for missing owner/date/category (person, calendar, tag) and a subtle attention color when any required info is missing. Keep UI minimal and iOS-inspired.
+- [x] Rework `src/app/pages/inbox/` into a triage view (no filter controls). Load tasks without client-side filters and group into sections in this priority order: Unassigned (owner == null) -> Missing scheduling (time_mode == null OR required date missing) -> Missing category (category == null) -> Ready for planning. Each task appears only in the first matching section. Add clear empty states per section.
+- [x] Add visual attention cues in the inbox: small icon chips for missing owner/date/category (person, calendar, tag) and a subtle attention color when any required info is missing. Keep UI minimal and iOS-inspired.
 
 ## Minimal task creation (title-only)
 - [x] Update backend validation in `functions/utils/tasks.ts` so only `title` is required. Allow owner/category/effort/time_mode/due_date/planned_date/priority to be null. Set missing optional fields to null on create. Keep `id` generation as-is.

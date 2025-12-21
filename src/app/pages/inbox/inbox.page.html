@@ -4,49 +4,10 @@
       <p class="eyebrow">Gedankenablage</p>
       <h1>Eingang</h1>
     </div>
-    <div class="hint">Aufgaben jetzt erfassen, Details später im Formular ergänzen.</div>
+    <div class="hint">Aufgaben erfassen und fehlende Details sofort sichtbar machen.</div>
   </header>
 
   <a class="new-task-button" [routerLink]="'/tasks/new'" [queryParams]="{ returnUrl: '/inbox' }">Neue Aufgabe</a>
-
-  <section class="controls" aria-label="Filter und Sortierung">
-    <label class="control">
-      <span class="label">Status</span>
-      <select [value]="statusFilter()" (change)="onStatusChange($event)">
-        @for (option of statusOptions; track option.value) {
-          <option [value]="option.value">{{ option.label }}</option>
-        }
-      </select>
-    </label>
-
-    <label class="control">
-      <span class="label">Kategorie</span>
-      <select [value]="categoryFilter()" (change)="onCategoryChange($event)">
-        <option value="all">Alle Kategorien</option>
-        @for (category of categories(); track category.id) {
-          <option [value]="category.id">{{ category.label }}</option>
-        }
-      </select>
-    </label>
-
-    <label class="control">
-      <span class="label">Datum</span>
-      <select [value]="dateFilter()" (change)="onDateFilterChange($event)">
-        @for (filter of dateFilters; track filter.value) {
-          <option [value]="filter.value">{{ filter.label }}</option>
-        }
-      </select>
-    </label>
-
-    <label class="control">
-      <span class="label">Sortieren</span>
-      <select [value]="sortMode()" (change)="onSortChange($event)">
-        @for (option of sortOptions; track option.value) {
-          <option [value]="option.value">{{ option.label }}</option>
-        }
-      </select>
-    </label>
-  </section>
 
   @if (error()) {
     <div class="message">{{ error() }}</div>
@@ -57,19 +18,96 @@
   }
 
   @if (!loading()) {
-    <div class="list">
-      @for (task of filteredTasks(); track task.id) {
-        <app-task-card
-          [task]="task"
-          [priorities]="taskPriorities()[task.id] ?? []"
-          [users]="users()"
-          class="task-item"
-        ></app-task-card>
-      }
+    @let sections = triageSections();
 
-      @if (!filteredTasks().length && !error()) {
-        <div class="empty">Noch nichts hier. Füge die erste Aufgabe hinzu.</div>
-      }
+    <div class="triage">
+      <section class="triage-section" aria-label="Unassigned tasks">
+        <div class="section-header">
+          <h2>Unassigned</h2>
+          <p class="section-hint">Weise eine verantwortliche Person zu.</p>
+        </div>
+
+        <div class="list">
+          @for (task of sections.unassigned; track task.id) {
+            <app-task-card
+              [task]="task"
+              [priorities]="taskPriorities()[task.id] ?? []"
+              [users]="users()"
+              class="task-item"
+            ></app-task-card>
+          }
+
+          @if (!sections.unassigned.length) {
+            <div class="empty">Alle Aufgaben haben eine Zuordnung.</div>
+          }
+        </div>
+      </section>
+
+      <section class="triage-section" aria-label="Missing scheduling">
+        <div class="section-header">
+          <h2>Fehlendes Timing</h2>
+          <p class="section-hint">Lege Zeitmodus und Datum fest.</p>
+        </div>
+
+        <div class="list">
+          @for (task of sections.missingScheduling; track task.id) {
+            <app-task-card
+              [task]="task"
+              [priorities]="taskPriorities()[task.id] ?? []"
+              [users]="users()"
+              class="task-item"
+            ></app-task-card>
+          }
+
+          @if (!sections.missingScheduling.length) {
+            <div class="empty">Alle Aufgaben sind zeitlich verortet.</div>
+          }
+        </div>
+      </section>
+
+      <section class="triage-section" aria-label="Missing category">
+        <div class="section-header">
+          <h2>Keine Kategorie</h2>
+          <p class="section-hint">Ordne einen Raum oder Bereich zu.</p>
+        </div>
+
+        <div class="list">
+          @for (task of sections.missingCategory; track task.id) {
+            <app-task-card
+              [task]="task"
+              [priorities]="taskPriorities()[task.id] ?? []"
+              [users]="users()"
+              class="task-item"
+            ></app-task-card>
+          }
+
+          @if (!sections.missingCategory.length) {
+            <div class="empty">Alle Aufgaben haben eine Kategorie.</div>
+          }
+        </div>
+      </section>
+
+      <section class="triage-section" aria-label="Ready for planning">
+        <div class="section-header">
+          <h2>Bereit für Planung</h2>
+          <p class="section-hint">Alle Pflichtangaben sind hinterlegt.</p>
+        </div>
+
+        <div class="list">
+          @for (task of sections.ready; track task.id) {
+            <app-task-card
+              [task]="task"
+              [priorities]="taskPriorities()[task.id] ?? []"
+              [users]="users()"
+              class="task-item"
+            ></app-task-card>
+          }
+
+          @if (!sections.ready.length) {
+            <div class="empty">Alles ist vorbereitet. Plane die nächsten Schritte.</div>
+          }
+        </div>
+      </section>
     </div>
   }
 </section>

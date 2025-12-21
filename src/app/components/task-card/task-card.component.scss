@@ -20,6 +20,11 @@
   transform: translateY(-1px);
 }
 
+.card.needs-attention {
+  border-color: rgba(255, 159, 10, 0.35);
+  background: linear-gradient(180deg, rgba(255, 159, 10, 0.08), rgba(255, 159, 10, 0.02));
+}
+
 .priority-strip {
   position: absolute;
   left: 0;
@@ -78,6 +83,29 @@
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+.attention-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.attention-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border-radius: 12px;
+  background: rgba(255, 159, 10, 0.14);
+  color: var(--ios-text);
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.chip-label {
+  font-weight: 600;
 }
 
 .priority-chip {

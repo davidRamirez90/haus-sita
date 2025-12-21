@@ -1,21 +1,20 @@
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
-import { NgIf } from '@angular/common';
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { Task } from '../../core/task.model';
 import { PriorityLevel, TaskPriority } from '../../core/priority.model';
 import { User } from '../../core/user.model';
 
 @Component({
   selector: 'app-task-card',
-  imports: [NgIf],
+  imports: [],
   templateUrl: './task-card.component.html',
   styleUrls: ['./task-card.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TaskCardComponent {
-  @Input({ required: true }) task!: Task;
-  @Input() priority: PriorityLevel = 'none';
-  @Input() priorities: TaskPriority[] = [];
-  @Input() users: User[] = [];
+  readonly task = input.required<Task>();
+  readonly priority = input<PriorityLevel>('none');
+  readonly priorities = input<TaskPriority[]>([]);
+  readonly users = input<User[]>([]);
 
   private readonly priorityColors: Record<PriorityLevel, string> = {
     none: '#D1D5DB',
@@ -30,31 +29,33 @@ export class TaskCardComponent {
     both: '#10B981'
   };
 
-  get priorityColor(): string {
-    return this.priorityColors[this.priority] ?? this.priorityColors.none;
-  }
+  readonly priorityColor = computed(() => this.priorityColors[this.priority()] ?? this.priorityColors.none);
 
-  get isUnassigned(): boolean {
-    return this.task.owner === null || typeof this.task.owner === 'undefined';
-  }
+  readonly isUnassigned = computed(() => {
+    const owner = this.task().owner;
+    return owner === null || typeof owner === 'undefined';
+  });
 
-  get ownerColor(): string {
-    if (this.isUnassigned) return '#D1D5DB';
-    return this.ownerColors[this.task.owner ?? 'you'] ?? this.ownerColors.you;
-  }
+  readonly ownerColor = computed(() => {
+    if (this.isUnassigned()) return '#D1D5DB';
+    const owner = this.task().owner;
+    if (!owner) return this.ownerColors.you;
+    return this.ownerColors[owner] ?? this.ownerColors.you;
+  });
 
-  get effortLabel(): string {
-    const effort = this.task.effort;
+  readonly effortLabel = computed(() => {
+    const effort = this.task().effort;
     if (typeof effort === 'number' && effort > 0) return `${effort}m`;
     return '–';
-  }
+  });
 
-  get priorityBadges(): { id: string; name: string; priorityColor: string; userColor: string }[] {
-    if (!this.priorities.length) return [];
+  readonly priorityBadges = computed(() => {
+    const priorities = this.priorities();
+    if (!priorities.length) return [];
 
-    const userMap = new Map(this.users.map((user) => [user.id, user]));
+    const userMap = new Map(this.users().map((user) => [user.id, user]));
 
-    return this.priorities.map((item) => {
+    return priorities.map((item) => {
       const user = userMap.get(item.user_id);
       return {
         id: item.user_id,
@@ -63,5 +64,5 @@ export class TaskCardComponent {
         userColor: user?.color ?? '#9CA3AF'
       };
     });
-  }
+  });
 }

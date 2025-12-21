@@ -67,7 +67,10 @@ export class WeekPage implements OnInit {
           priorities: priorities[task.id] ?? []
         }))
       );
-      const totalEffort = tasks.reduce((sum, task) => sum + (Number.isFinite(task.effort) ? task.effort : 0), 0);
+      const totalEffort = tasks.reduce((sum, task) => {
+        const effort = task.effort ?? 0;
+        return sum + (Number.isFinite(effort) ? effort : 0);
+      }, 0);
       return {
         ...day,
         tasks: cards,

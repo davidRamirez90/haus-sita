@@ -53,7 +53,10 @@ export class TodayPage implements OnInit {
   protected readonly totalEffortLabel = computed(() => this.formatEffort(this.totalEffort()));
 
   protected readonly totalEffort = computed(() =>
-    this.tasks().reduce((sum, task) => sum + (Number.isFinite(task.effort) ? task.effort : 0), 0)
+    this.tasks().reduce((sum, task) => {
+      const effort = task.effort ?? 0;
+      return sum + (Number.isFinite(effort) ? effort : 0);
+    }, 0)
   );
 
   protected readonly sections = computed<TaskSection[]>(() => {

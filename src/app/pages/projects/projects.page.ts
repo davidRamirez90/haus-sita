@@ -46,7 +46,8 @@ export class ProjectsPage implements OnInit {
       const subtasks = tasks.filter((task) => task.parent_id === project.id);
       const completed = subtasks.filter((task) => task.status === 'done').length;
       const total = subtasks.length;
-      const categoryLabel = categoryMap[project.category] ?? null;
+      const categoryKey = project.category ?? null;
+      const categoryLabel = categoryKey ? categoryMap[categoryKey] ?? null : null;
 
       return {
         id: project.id,

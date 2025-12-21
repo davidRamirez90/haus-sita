@@ -1,21 +1,33 @@
 <article class="card">
-  <span class="priority-strip" [style.backgroundColor]="priorityColor"></span>
+  <span class="priority-strip" [style.backgroundColor]="priorityColor()"></span>
   <div class="content">
     <div class="title-row">
-      <div class="title">{{ task.title }}</div>
-      <span class="owner-dot" *ngIf="!isUnassigned" [style.backgroundColor]="ownerColor" title="Zuständig"></span>
-      <span class="owner-label" *ngIf="isUnassigned">Unassigned</span>
+      <div class="title">{{ task().title }}</div>
+      @if (!isUnassigned()) {
+        <span class="owner-dot" [style.backgroundColor]="ownerColor()" title="Zuständig"></span>
+      }
+      @if (isUnassigned()) {
+        <span class="owner-label">Unassigned</span>
+      }
     </div>
     <div class="meta-row">
-      <span class="meta">{{ effortLabel }}</span>
-      <span class="meta" *ngIf="task.due_date">Fällig {{ task.due_date }}</span>
-      <span class="meta" *ngIf="task.planned_date && task.time_mode === 'fixed'">Geplant {{ task.planned_date }}</span>
+      <span class="meta">{{ effortLabel() }}</span>
+      @if (task().due_date) {
+        <span class="meta">Fällig {{ task().due_date }}</span>
+      }
+      @if (task().planned_date && task().time_mode === 'fixed') {
+        <span class="meta">Geplant {{ task().planned_date }}</span>
+      }
     </div>
-    <div class="priority-row" *ngIf="priorityBadges.length">
-      <span class="priority-chip" *ngFor="let item of priorityBadges">
-        <span class="priority-dot" [style.backgroundColor]="item.priorityColor"></span>
-        <span class="priority-name" [style.color]="item.userColor">{{ item.name }}</span>
-      </span>
-    </div>
+    @if (priorityBadges().length) {
+      <div class="priority-row">
+        @for (item of priorityBadges(); track item.id) {
+          <span class="priority-chip">
+            <span class="priority-dot" [style.backgroundColor]="item.priorityColor"></span>
+            <span class="priority-name" [style.color]="item.userColor">{{ item.name }}</span>
+          </span>
+        }
+      </div>
+    }
   </div>
 </article>

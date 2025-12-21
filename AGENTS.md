@@ -2,6 +2,9 @@
 
 Quick project context and workflow notes for AI/code assistants working in this repo.
 
+## Work queue
+- Always read `TODO.md` first; it is the current source of truth for pending work and implementation details. After finishing a task, mark it done inside `TODO.md`.
+
 ## Project overview
 - App: Haus-sita (Angular SPA) with Cloudflare Pages + Pages Functions + D1.
 - Frontend source: `src/`

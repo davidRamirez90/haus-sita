@@ -3,7 +3,8 @@
   <div class="content">
     <div class="title-row">
       <div class="title">{{ task.title }}</div>
-      <span class="owner-dot" [style.backgroundColor]="ownerColor" title="Zuständig"></span>
+      <span class="owner-dot" *ngIf="!isUnassigned" [style.backgroundColor]="ownerColor" title="Zuständig"></span>
+      <span class="owner-label" *ngIf="isUnassigned">Unassigned</span>
     </div>
     <div class="meta-row">
       <span class="meta">{{ effortLabel }}</span>

@@ -6,11 +6,11 @@ export interface Task {
   id: string;
   title: string;
   description?: string | null;
-  owner: TaskOwner;
-  status: TaskStatus;
-  effort: number;
-  category: string;
-  time_mode: TaskTimeMode;
+  owner?: TaskOwner | null;
+  status?: TaskStatus;
+  effort?: number | null;
+  category?: string | null;
+  time_mode?: TaskTimeMode | null;
   created_at?: string;
   due_date?: string | null;
   planned_date?: string | null;

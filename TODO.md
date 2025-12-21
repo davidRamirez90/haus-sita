@@ -5,13 +5,13 @@
 - Add visual attention cues in the inbox: small icon chips for missing owner/date/category (person, calendar, tag) and a subtle attention color when any required info is missing. Keep UI minimal and iOS-inspired.
 
 ## Minimal task creation (title-only)
-- Update backend validation in `functions/utils/tasks.ts` so only `title` is required. Allow owner/category/effort/time_mode/due_date/planned_date/priority to be null. Set missing optional fields to null on create. Keep `id` generation as-is.
-- Update `functions/api/tasks.ts` to skip category existence validation when category is null. Make sure inserts accept null optional fields.
-- Update `src/app/pages/task-create/` so the form can submit with title only. Make all optional fields truly optional in UI, and remove any required hints/constraints tied to owner/category/effort/time_mode/status.
+- [x] Update backend validation in `functions/utils/tasks.ts` so only `title` is required. Allow owner/category/effort/time_mode/due_date/planned_date/priority to be null. Set missing optional fields to null on create. Keep `id` generation as-is.
+- [x] Update `functions/api/tasks.ts` to skip category existence validation when category is null. Make sure inserts accept null optional fields.
+- [x] Update `src/app/pages/task-create/` so the form can submit with title only. Make all optional fields truly optional in UI, and remove any required hints/constraints tied to owner/category/effort/time_mode/status.
 
 ## Owner semantics
-- Backend: represent unassigned as `owner = null` in D1. "both" counts as assigned. Update `Task` model types to allow `owner?: TaskOwner | null`.
-- Frontend: display an "Unassigned" label when owner is null (do not show a user dot). Treat "both" as assigned.
+- [x] Backend: represent unassigned as `owner = null` in D1. "both" counts as assigned. Update `Task` model types to allow `owner?: TaskOwner | null`.
+- [x] Frontend: display an "Unassigned" label when owner is null (do not show a user dot). Treat "both" as assigned.
 
 ## Global owner filter (header)
 - Add a global toggle in `src/app/app.html` (All / Mine). Store state in `src/app/app.ts` or a small service and apply it to all list views (Inbox, Today, Week, Rooms, Projects, Project detail lists).

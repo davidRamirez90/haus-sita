@@ -5,6 +5,7 @@ import { catchError, finalize, forkJoin, map, of } from 'rxjs';
 import { TaskCardComponent } from '../../components/task-card/task-card.component';
 import { TaskService } from '../../core/task.service';
 import { UserService } from '../../core/user.service';
+import { AuthService } from '../../core/auth.service';
 import { Task } from '../../core/task.model';
 import { PriorityLevel, TaskPriority } from '../../core/priority.model';
 import { User } from '../../core/user.model';
@@ -33,6 +34,7 @@ type TaskSection = {
 export class TodayPage implements OnInit {
   private readonly taskService = inject(TaskService);
   private readonly userService = inject(UserService);
+  private readonly authService = inject(AuthService);
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly tasks = signal<Task[]>([]);
@@ -41,12 +43,17 @@ export class TodayPage implements OnInit {
   protected readonly loading = signal(false);
   protected readonly error = signal<string | null>(null);
 
-  private readonly currentUserId = 'you';
-  private readonly partnerUserId = 'partner';
+  private readonly currentUserId = computed(() => this.authService.currentUser()?.id ?? 'you');
+  private readonly partnerUserId = computed(() => {
+    const currentId = this.currentUserId();
+    const partner = this.users().find((user) => user.id !== currentId)?.id;
+    return partner ?? 'partner';
+  });
   private readonly todayKey = this.toDateKey(new Date());
 
   protected readonly greetingLine = computed(() => {
-    const match = this.users().find((user) => user.id === this.currentUserId);
+    const authUser = this.authService.currentUser();
+    const match = authUser ?? this.users().find((user) => user.id === this.currentUserId());
     return match?.name ? `Guten Morgen, ${match.name}.` : 'Guten Morgen.';
   });
 
@@ -62,7 +69,7 @@ export class TodayPage implements OnInit {
   protected readonly sections = computed<TaskSection[]>(() => {
     const list = this.tasks();
     const priorities = this.taskPriorities();
-    const partnerName = this.userLabel(this.partnerUserId, 'Partner');
+    const partnerName = this.userLabel(this.partnerUserId(), 'Partner');
 
     const groups: Record<'you' | 'partner' | 'both', TaskCardView[]> = {
       you: [],
@@ -172,11 +179,11 @@ export class TodayPage implements OnInit {
 
   private priorityForSection(owner: Task['owner'], priorities: TaskPriority[]): PriorityLevel {
     if (owner === 'you') {
-      return priorityForUser(priorities, this.currentUserId);
+      return priorityForUser(priorities, this.currentUserId());
     }
 
     if (owner === 'partner') {
-      return priorityForUser(priorities, this.partnerUserId);
+      return priorityForUser(priorities, this.partnerUserId());
     }
 
     return highestPriority(priorities);

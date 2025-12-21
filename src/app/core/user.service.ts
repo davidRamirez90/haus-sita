@@ -25,11 +25,11 @@ export class UserService {
     return this.http.get<UserResponse>(`${this.baseUrl}/${id}`).pipe(map((res) => res.user));
   }
 
-  create(user: Pick<User, 'name' | 'color'> & Partial<Pick<User, 'id'>>): Observable<User> {
+  create(user: Pick<User, 'name' | 'color' | 'email'> & Partial<Pick<User, 'id'>>): Observable<User> {
     return this.http.post<UserResponse>(this.baseUrl, user).pipe(map((res) => res.user));
   }
 
-  update(id: string, patch: Partial<Pick<User, 'name' | 'color'>>): Observable<User> {
+  update(id: string, patch: Partial<Pick<User, 'name' | 'color' | 'email'>>): Observable<User> {
     return this.http.patch<UserResponse>(`${this.baseUrl}/${id}`, patch).pipe(map((res) => res.user));
   }
 }

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -11,6 +11,7 @@ import { Category } from '../../core/category.model';
 import { PriorityLevel } from '../../core/priority.model';
 import { UserService } from '../../core/user.service';
 import { User } from '../../core/user.model';
+import { AuthService } from '../../core/auth.service';
 
 const EFFORT_OPTIONS = [5, 10, 15, 30, 45, 60, 90, 120];
 
@@ -22,14 +23,13 @@ const EFFORT_OPTIONS = [5, 10, 15, 30, 45, 60, 90, 120];
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TaskCreatePage implements OnInit {
-  constructor(
-    private readonly taskService: TaskService,
-    private readonly categoryService: CategoryService,
-    private readonly userService: UserService,
-    private readonly route: ActivatedRoute,
-    private readonly router: Router,
-    private readonly destroyRef: DestroyRef
-  ) {}
+  private readonly taskService = inject(TaskService);
+  private readonly categoryService = inject(CategoryService);
+  private readonly userService = inject(UserService);
+  private readonly authService = inject(AuthService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
 
   protected categories = signal<Category[]>([]);
   protected projects = signal<Task[]>([]);
@@ -50,7 +50,7 @@ export class TaskCreatePage implements OnInit {
   protected userPriorities = signal<Record<string, PriorityLevel>>({});
   protected submitting = signal(false);
 
-  private readonly currentUserId = 'you';
+  private readonly currentUserId = computed(() => this.authService.currentUser()?.id ?? 'you');
   private returnUrl = '/inbox';
 
   get effortValue(): number {
@@ -150,7 +150,7 @@ export class TaskCreatePage implements OnInit {
 
   setSelfPriority(priority: PriorityLevel): void {
     this.newPriority.set(priority);
-    this.setUserPriority(this.currentUserId, priority);
+    this.setUserPriority(this.currentUserId(), priority);
   }
 
   canSubmit(): boolean {
@@ -206,7 +206,7 @@ export class TaskCreatePage implements OnInit {
           }
           const updates = priorityUpdates.length
             ? priorityUpdates
-            : [{ user_id: this.currentUserId, priority }];
+            : [{ user_id: this.currentUserId(), priority }];
           return this.taskService
             .updatePriorities(task.id, updates)
             .pipe(

@@ -51,7 +51,8 @@ export const onRequestPatch: PagesFunction<Env> = async ({ env, request, params 
 
   const hasName = Object.prototype.hasOwnProperty.call(body ?? {}, 'name');
   const hasColor = Object.prototype.hasOwnProperty.call(body ?? {}, 'color');
-  if (!hasName && !hasColor) {
+  const hasEmail = Object.prototype.hasOwnProperty.call(body ?? {}, 'email');
+  if (!hasName && !hasColor && !hasEmail) {
     return errorResponse('No updatable fields provided', 400);
   }
 
@@ -63,6 +64,7 @@ export const onRequestPatch: PagesFunction<Env> = async ({ env, request, params 
 
   let name = existing.name as string;
   let color = existing.color ?? null;
+  let email = existing.email ?? null;
 
   if (hasName) {
     const parsed = asNonEmptyString(body.name);
@@ -78,12 +80,19 @@ export const onRequestPatch: PagesFunction<Env> = async ({ env, request, params 
     color = parsed;
   }
 
+  if (hasEmail) {
+    if (!isStringOrNull(body.email)) {
+      return errorResponse('email must be a string or null', 400);
+    }
+    email = normalizeEmail(body.email);
+  }
+
   try {
-    await env.MY_HAUSSITADB.prepare('UPDATE users SET name = ?, color = ? WHERE id = ?')
-      .bind(name, color, id)
+    await env.MY_HAUSSITADB.prepare('UPDATE users SET name = ?, color = ?, email = ? WHERE id = ?')
+      .bind(name, color, email, id)
       .run();
 
-    return jsonResponse({ user: { ...existing, name, color } });
+    return jsonResponse({ user: { ...existing, name, color, email } });
   } catch (err) {
     console.error(`PATCH /api/users/${id} failed`, err);
     return errorResponse('Failed to update user', 500);
@@ -105,4 +114,11 @@ function asOptionalString(value: any): string | null {
 
 function isStringOrNull(value: any): boolean {
   return value === null || typeof value === 'string';
+}
+
+function normalizeEmail(value: any): string | null {
+  if (value === null || value === undefined) return null;
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim().toLowerCase();
+  return trimmed.length ? trimmed : null;
 }

@@ -17,6 +17,13 @@
 - Add a global toggle in `src/app/app.html` (All / Mine). Store state in `src/app/app.ts` or a small service and apply it to all list views (Inbox, Today, Week, Rooms, Projects, Project detail lists).
 - Mine filter rule: include tasks where owner == you OR owner == both OR owner == null (unassigned). Exclude tasks where owner == partner.
 
+## Cloudflare Access auth integration (map email -> user)
+- Add `email` column to `users` table via new migration in `functions/migrations/` (ALTER TABLE + unique index). Seed emails for existing users: `you` -> `dramirez.c90@gmail.com`, `partner` -> `lenaschlueter@gmx.de`.
+- Create a new Pages Function at `functions/api/auth/me.ts` that reads `Cf-Access-Authenticated-User-Email` header, looks up the user by email, and returns `{ user }`. Return 401 for missing/unknown emails.
+- Update user APIs to accept/store `email` (create + patch), and update `src/app/core/user.model.ts` to include `email?: string | null`.
+- Add an Angular auth service (`src/app/core/auth.service.ts`) that fetches `/api/auth/me` once and exposes the current user as a signal.
+- Update `src/app/app.ts` to load the current user on app init, and replace hardcoded `'you'` references (e.g. in Today greeting / Task create priority defaults) with the auth user id.
+
 ## Rooms view: No category bucket
 - In `src/app/pages/categories/`, add a synthetic chip for "No category" (category == null). Selecting it should show tasks with no category. Keep this bucket visible alongside real categories.
 

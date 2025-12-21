@@ -46,20 +46,24 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
     return errorResponse('color must be a string or null', 400);
   }
   const color = asOptionalString(payload.color);
+  if (Object.prototype.hasOwnProperty.call(payload, 'email') && !isStringOrNull(payload.email)) {
+    return errorResponse('email must be a string or null', 400);
+  }
+  const email = normalizeEmail(payload.email);
   const id = payload.id ? String(payload.id) : createId();
 
   try {
     await env.MY_HAUSSITADB.prepare(
-      'INSERT INTO users (id, name, color) VALUES (?, ?, ?)'
+      'INSERT INTO users (id, name, color, email) VALUES (?, ?, ?, ?)'
     )
-      .bind(id, name, color)
+      .bind(id, name, color, email)
       .run();
 
     const { results } = await env.MY_HAUSSITADB.prepare('SELECT * FROM users WHERE id = ?')
       .bind(id)
       .all();
 
-    return jsonResponse({ user: results?.[0] ?? { id, name, color } }, { status: 201 });
+    return jsonResponse({ user: results?.[0] ?? { id, name, color, email } }, { status: 201 });
   } catch (err) {
     console.error('POST /api/users failed', err);
     return errorResponse('Failed to create user', 500);
@@ -88,4 +92,11 @@ function asOptionalString(value: any): string | null {
 
 function isStringOrNull(value: any): boolean {
   return value === null || typeof value === 'string';
+}
+
+function normalizeEmail(value: any): string | null {
+  if (value === null || value === undefined) return null;
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim().toLowerCase();
+  return trimmed.length ? trimmed : null;
 }

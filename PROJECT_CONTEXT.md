@@ -35,20 +35,20 @@ The app should:
 You must design around these entities:
 
 - **User**
-    - Minimal: ID, name, color.
+    - Minimal: ID, name, color, optional email.
     - In this first version we can assume 2 users, but schema should support more.
 
 - **Task**
     - Always doable/finishable.
     - Has:
-        - Owner (`you`, `partner`, or `both`).
-        - Status: `inbox`, `planned`, `today`, `done`.
-        - Effort in **quantized minutes** (not free-form).
-        - Category (e.g., room-based or functional).
-        - Time mode:
-            - `flexible`: can be done anytime before `due_date`.
-            - `fixed`: planned for a specific `planned_date`.
-        - Optional `due_date`, `planned_date`.
+        - Owner (`you`, `partner`, `both`, or unassigned).
+        - Status: `inbox`, `planned`, `today`, `done` (computed from dates/completion).
+        - Effort in **quantized minutes** (not free-form, optional).
+        - Category (e.g., room-based or functional, optional).
+        - Time mode (optional):
+            - `flexible`: can be done anytime before `due_date` (requires `due_date`).
+            - `fixed`: planned for a specific `planned_date` (requires `planned_date`).
+        - Optional `due_date`, `planned_date` (see time mode rules).
         - Optional `parent_id` to form a project/subtask tree.
         - `is_project` flag for parent tasks (like “Finish baby’s room”).
         - `completed_at` timestamp when done.
@@ -109,6 +109,7 @@ CREATE TABLE IF NOT EXISTS users (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
   color TEXT,
+  email TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -116,11 +117,11 @@ CREATE TABLE IF NOT EXISTS tasks (
   id TEXT PRIMARY KEY,
   title TEXT NOT NULL,
   description TEXT,
-  owner TEXT NOT NULL,
-  status TEXT NOT NULL CHECK (status IN ('inbox','planned','today','done')),
-  effort INTEGER NOT NULL,
-  category TEXT NOT NULL,
-  time_mode TEXT NOT NULL CHECK (time_mode IN ('flexible','fixed')),
+  owner TEXT,
+  status TEXT NOT NULL DEFAULT 'inbox' CHECK (status IN ('inbox','planned','today','done')),
+  effort INTEGER,
+  category TEXT,
+  time_mode TEXT CHECK (time_mode IN ('flexible','fixed')),
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   due_date TEXT,
   planned_date TEXT,

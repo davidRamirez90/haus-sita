@@ -14,31 +14,31 @@
 - [x] Frontend: display an "Unassigned" label when owner is null (do not show a user dot). Treat "both" as assigned.
 
 ## Global owner filter (header)
-- Add a global toggle in `src/app/app.html` (All / Mine). Store state in `src/app/app.ts` or a small service and apply it to all list views (Inbox, Today, Week, Rooms, Projects, Project detail lists).
-- Mine filter rule: include tasks where owner == you OR owner == both OR owner == null (unassigned). Exclude tasks where owner == partner.
+- [x] Add a global toggle in `src/app/app.html` (All / Mine). Store state in `src/app/app.ts` or a small service and apply it to all list views (Inbox, Today, Week, Rooms, Projects, Project detail lists).
+- [x] Mine filter rule: include tasks where owner == you OR owner == both OR owner == null (unassigned). Exclude tasks where owner == partner.
 
 ## Cloudflare Access auth integration (map email -> user)
-- Add `email` column to `users` table via new migration in `functions/migrations/` (ALTER TABLE + unique index). Seed emails for existing users: `you` -> `dramirez.c90@gmail.com`, `partner` -> `lenaschlueter@gmx.de`.
-- Create a new Pages Function at `functions/api/auth/me.ts` that reads `Cf-Access-Authenticated-User-Email` header, looks up the user by email, and returns `{ user }`. Return 401 for missing/unknown emails.
-- Update user APIs to accept/store `email` (create + patch), and update `src/app/core/user.model.ts` to include `email?: string | null`.
-- Add an Angular auth service (`src/app/core/auth.service.ts`) that fetches `/api/auth/me` once and exposes the current user as a signal.
-- Update `src/app/app.ts` to load the current user on app init, and replace hardcoded `'you'` references (e.g. in Today greeting / Task create priority defaults) with the auth user id.
+- [x] Add `email` column to `users` table via new migration in `functions/migrations/` (ALTER TABLE + unique index). Seed emails for existing users: `you` -> `dramirez.c90@gmail.com`, `partner` -> `lenaschlueter@gmx.de`.
+- [x] Create a new Pages Function at `functions/api/auth/me.ts` that reads `Cf-Access-Authenticated-User-Email` header, looks up the user by email, and returns `{ user }`. Return 401 for missing/unknown emails.
+- [x] Update user APIs to accept/store `email` (create + patch), and update `src/app/core/user.model.ts` to include `email?: string | null`.
+- [x] Add an Angular auth service (`src/app/core/auth.service.ts`) that fetches `/api/auth/me` once and exposes the current user as a signal.
+- [x] Update `src/app/app.ts` to load the current user on app init, and replace hardcoded `'you'` references (e.g. in Today greeting / Task create priority defaults) with the auth user id.
 
 ## Rooms view: No category bucket
-- In `src/app/pages/categories/`, add a synthetic chip for "No category" (category == null). Selecting it should show tasks with no category. Keep this bucket visible alongside real categories.
+- [x] In `src/app/pages/categories/`, add a synthetic chip for "No category" (category == null). Selecting it should show tasks with no category. Keep this bucket visible alongside real categories.
 
 ## Quick actions on task cards
-- Add quick actions to task cards (or a shared wrapper) in all list views: at minimum "Mark done". This should set `completed_at` to now via `TaskService.update`, which drives computed status. Ensure accessible button labels and focus states.
+- [x] Add quick actions to task cards (or a shared wrapper) in all list views: at minimum "Mark done". This should set `completed_at` to now via `TaskService.update`, which drives computed status. Ensure accessible button labels and focus states.
 
 ## Computed status (no manual status)
-- Status becomes derived in API responses (do not accept status from the client). Use time_mode to choose the date field: flexible -> due_date, fixed -> planned_date. Rules: completed_at set -> done; else if chosen date is today -> today; else if chosen date exists -> planned; else -> inbox.
-- Update `functions/utils/tasks.ts` and `parseListQuery` to support status filtering based on computed status (either in SQL using CASE/WHERE or in post-processing). Update all frontend views to stop setting status directly and to rely on computed status.
+- [x] Status becomes derived in API responses (do not accept status from the client). Use time_mode to choose the date field: flexible -> due_date, fixed -> planned_date. Rules: completed_at set -> done; else if chosen date is today -> today; else if chosen date exists -> planned; else -> inbox.
+- [x] Update `functions/utils/tasks.ts` and `parseListQuery` to support status filtering based on computed status (either in SQL using CASE/WHERE or in post-processing). Update all frontend views to stop setting status directly and to rely on computed status.
 
 ## Time mode/date rule
-- Enforce: if time_mode is set, the corresponding date must be set (flexible -> due_date, fixed -> planned_date). If time_mode is null, both date fields should be null. Validate in backend and reflect in UI.
+- [x] Enforce: if time_mode is set, the corresponding date must be set (flexible -> due_date, fixed -> planned_date). If time_mode is null, both date fields should be null. Validate in backend and reflect in UI.
 
 ## Tests
-- Add basic unit tests for `TaskService` and backend validation in `functions/utils/tasks.ts`: title-only creation accepted, time_mode/date enforcement, and computed status mapping.
+- [x] Add basic unit tests for `TaskService` and backend validation in `functions/utils/tasks.ts`: title-only creation accepted, time_mode/date enforcement, and computed status mapping.
 
 ## D1 migrations
-- Create a new migration in `functions/migrations/` to relax NOT NULL constraints on tasks fields (owner/category/effort/time_mode/status if needed) and to support computed status. Use a table rebuild pattern (create new table, copy data, drop old, rename). Apply locally and remotely with `npx wrangler d1 migrations apply haussita-db` (add `--remote` for remote).
+- [x] Create a new migration in `functions/migrations/` to relax NOT NULL constraints on tasks fields (owner/category/effort/time_mode/status if needed) and to support computed status. Use a table rebuild pattern (create new table, copy data, drop old, rename). Apply locally and remotely with `npx wrangler d1 migrations apply haussita-db` (add `--remote` for remote).

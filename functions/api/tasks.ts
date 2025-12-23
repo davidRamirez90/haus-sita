@@ -1,5 +1,5 @@
 import { jsonResponse, errorResponse } from '../utils/response';
-import { parseListQuery, validateNewTaskPayload } from '../utils/tasks';
+import { coerceTaskRow, parseListQuery, validateNewTaskPayload } from '../utils/tasks';
 
 type D1PreparedStatement = {
   bind: (...values: unknown[]) => {
@@ -20,7 +20,7 @@ type Env = {
 
 export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   const url = new URL(request.url);
-  const { clause, params, limit, offset, errors } = parseListQuery(url);
+  const { clause, params, limit, offset, errors, status } = parseListQuery(url);
 
   if (errors.length) {
     return errorResponse(errors.join('; '), 400);
@@ -32,7 +32,9 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
     ).bind(...params, limit, offset);
 
     const { results } = await statement.all();
-    return jsonResponse({ tasks: results ?? [], limit, offset });
+    const tasks = (results ?? []).map((row) => coerceTaskRow(row));
+    const filtered = status ? tasks.filter((task) => task.status === status) : tasks;
+    return jsonResponse({ tasks: filtered, limit, offset });
   } catch (err) {
     console.error('GET /api/tasks failed', err);
     return errorResponse('Failed to fetch tasks', 500);
@@ -87,7 +89,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
       .bind(task.id)
       .all();
 
-    return jsonResponse({ task: results?.[0] ?? task }, { status: 201 });
+    const row = results?.[0];
+    return jsonResponse({ task: row ? coerceTaskRow(row) : task }, { status: 201 });
   } catch (err) {
     console.error('POST /api/tasks failed', err);
     return errorResponse('Failed to create task', 500);

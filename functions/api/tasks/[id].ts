@@ -1,5 +1,5 @@
 import { jsonResponse, errorResponse } from '../../utils/response';
-import { validatePatchedTask, ValidatedTaskInput } from '../../utils/tasks';
+import { coerceTaskRow, validatePatchedTask, ValidatedTaskInput } from '../../utils/tasks';
 
 type D1PreparedStatement = {
   bind: (...values: unknown[]) => {
@@ -47,7 +47,7 @@ export const onRequestPatch: PagesFunction<Env> = async ({ env, request, params 
   }
 
   const hasFields = Object.keys(body ?? {}).some((key) =>
-    ['title', 'description', 'owner', 'status', 'effort', 'category', 'time_mode', 'due_date', 'planned_date', 'is_project', 'parent_id', 'completed_at'].includes(
+    ['title', 'description', 'owner', 'effort', 'category', 'time_mode', 'due_date', 'planned_date', 'is_project', 'parent_id', 'completed_at'].includes(
       key
     )
   );
@@ -63,7 +63,7 @@ export const onRequestPatch: PagesFunction<Env> = async ({ env, request, params 
 
   const updated = validation.task;
 
-  if (Object.prototype.hasOwnProperty.call(body ?? {}, 'category')) {
+  if (Object.prototype.hasOwnProperty.call(body ?? {}, 'category') && updated.category) {
     try {
       const categoryOk = await hasCategory(env.MY_HAUSSITADB, updated.category);
       if (!categoryOk) {
@@ -78,14 +78,13 @@ export const onRequestPatch: PagesFunction<Env> = async ({ env, request, params 
   try {
     await env.MY_HAUSSITADB.prepare(
       `UPDATE tasks
-       SET title = ?, description = ?, owner = ?, status = ?, effort = ?, category = ?, time_mode = ?, due_date = ?, planned_date = ?, is_project = ?, parent_id = ?, completed_at = ?
+       SET title = ?, description = ?, owner = ?, effort = ?, category = ?, time_mode = ?, due_date = ?, planned_date = ?, is_project = ?, parent_id = ?, completed_at = ?
        WHERE id = ?`
     )
       .bind(
         updated.title,
         updated.description,
         updated.owner,
-        updated.status,
         updated.effort,
         updated.category,
         updated.time_mode,
@@ -127,21 +126,7 @@ async function fetchTask(db: D1Database, id: string): Promise<ValidatedTaskInput
   const row = results?.[0] as any;
   if (!row) return null;
 
-  return {
-    id: String(row.id),
-    title: String(row.title),
-    description: row.description ?? null,
-    owner: row.owner,
-    status: row.status,
-    effort: Number(row.effort),
-    category: String(row.category),
-    time_mode: row.time_mode,
-    due_date: row.due_date ?? null,
-    planned_date: row.planned_date ?? null,
-    is_project: row.is_project ? 1 : 0,
-    parent_id: row.parent_id ?? null,
-    completed_at: row.completed_at ?? null,
-  };
+  return coerceTaskRow(row);
 }
 
 async function hasCategory(db: D1Database, id: string): Promise<boolean> {

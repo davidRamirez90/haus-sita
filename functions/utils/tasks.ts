@@ -28,16 +28,17 @@ export function parseListQuery(url: URL): {
   limit: number;
   offset: number;
   errors: string[];
+  status: TaskStatus | null;
 } {
   const params: unknown[] = [];
   const clauses: string[] = [];
   const errors: string[] = [];
+  let status: TaskStatus | null = null;
 
-  const status = url.searchParams.get('status');
-  if (status) {
-    if (STATUS_VALUES.includes(status as TaskStatus)) {
-      clauses.push('status = ?');
-      params.push(status);
+  const statusParam = url.searchParams.get('status');
+  if (statusParam) {
+    if (STATUS_VALUES.includes(statusParam as TaskStatus)) {
+      status = statusParam as TaskStatus;
     } else {
       errors.push('Invalid status filter');
     }
@@ -101,7 +102,7 @@ export function parseListQuery(url: URL): {
 
   const clause = clauses.length ? `WHERE ${clauses.join(' AND ')}` : '';
 
-  return { clause, params, limit, offset, errors };
+  return { clause, params, limit, offset, errors, status };
 }
 
 export function validateNewTaskPayload(
@@ -121,12 +122,6 @@ export function validateNewTaskPayload(
   const ownerInput = body.owner;
   const owner = optionalEnum(ownerInput, OWNER_VALUES);
   if (ownerInput !== undefined && ownerInput !== null && owner === null) errors.push('owner must be you|partner|both');
-
-  const statusInput = body.status as TaskStatus | undefined;
-  const status = STATUS_VALUES.includes(statusInput as TaskStatus) ? (statusInput as TaskStatus) : 'inbox';
-  if (typeof body.status !== 'undefined' && status !== body.status) {
-    errors.push('status must be inbox|planned|today|done');
-  }
 
   const effortInput = body.effort;
   let effortValue: number | null = null;
@@ -150,16 +145,38 @@ export function validateNewTaskPayload(
   const description = asNonEmptyString(body.description);
   const completedAt = asNonEmptyString(body.completed_at);
 
-  const dueDate = asNonEmptyString(body.due_date);
-  const plannedDate = asNonEmptyString(body.planned_date);
+  const dueDateInput = asNonEmptyString(body.due_date);
+  const plannedDateInput = asNonEmptyString(body.planned_date);
 
-  if (timeMode === 'fixed' && !plannedDate) {
-    errors.push('planned_date is required for fixed tasks');
+  let dueDate: string | null = null;
+  let plannedDate: string | null = null;
+
+  if (timeMode === 'flexible') {
+    if (!dueDateInput) {
+      errors.push('due_date is required for flexible tasks');
+    } else {
+      dueDate = dueDateInput;
+    }
+  } else if (timeMode === 'fixed') {
+    if (!plannedDateInput) {
+      errors.push('planned_date is required for fixed tasks');
+    } else {
+      plannedDate = plannedDateInput;
+    }
+  } else if (dueDateInput || plannedDateInput) {
+    errors.push('time_mode is required when due_date or planned_date is set');
   }
 
   if (errors.length) {
     return { ok: false, errors };
   }
+
+  const status = computeTaskStatus({
+    time_mode: timeMode,
+    due_date: dueDate,
+    planned_date: plannedDate,
+    completed_at: completedAt
+  });
 
   const task: ValidatedTaskInput = {
     id: body.id ? String(body.id) : idFactory(),
@@ -170,8 +187,8 @@ export function validateNewTaskPayload(
     effort: effortValue ?? null,
     category,
     time_mode: timeMode,
-    due_date: timeMode === 'fixed' ? null : dueDate,
-    planned_date: timeMode === 'fixed' ? plannedDate : null,
+    due_date: dueDate,
+    planned_date: plannedDate,
     is_project: isProject,
     parent_id: parentId,
     completed_at: completedAt,
@@ -192,6 +209,53 @@ export function validatePatchedTask(
   return validateNewTaskPayload(merged, () => existing.id);
 }
 
+export function computeTaskStatus(task: {
+  time_mode?: TimeMode | null;
+  due_date?: string | null;
+  planned_date?: string | null;
+  completed_at?: string | null;
+}): TaskStatus {
+  if (task.completed_at) return 'done';
+
+  const timeMode = task.time_mode ?? null;
+  const date =
+    timeMode === 'fixed' ? task.planned_date ?? null : timeMode === 'flexible' ? task.due_date ?? null : null;
+
+  if (!date) return 'inbox';
+
+  const todayKey = formatDateKey(new Date());
+  return date === todayKey ? 'today' : 'planned';
+}
+
+export function coerceTaskRow(row: any): ValidatedTaskInput {
+  const effort = coerceNullableNumber(row.effort);
+  const dueDate = row.due_date ?? null;
+  const plannedDate = row.planned_date ?? null;
+  const timeMode = row.time_mode ?? null;
+  const completedAt = row.completed_at ?? null;
+
+  return {
+    id: String(row.id),
+    title: String(row.title),
+    description: row.description ?? null,
+    owner: row.owner ?? null,
+    status: computeTaskStatus({
+      time_mode: timeMode,
+      due_date: dueDate,
+      planned_date: plannedDate,
+      completed_at: completedAt
+    }),
+    effort,
+    category: row.category ?? null,
+    time_mode: timeMode,
+    due_date: dueDate,
+    planned_date: plannedDate,
+    is_project: row.is_project ? 1 : 0,
+    parent_id: row.parent_id ?? null,
+    completed_at: completedAt
+  };
+}
+
 function asNonEmptyString(value: any): string | null {
   if (typeof value !== 'string') return null;
   const trimmed = value.trim();
@@ -207,6 +271,20 @@ function optionalEnum<T extends string>(value: any, allowed: readonly T[]): T | 
 function asBooleanInt(value: any): number {
   if (value === true || value === 1 || value === '1' || value === 'true') return 1;
   return 0;
+}
+
+function coerceNullableNumber(value: any): number | null {
+  if (value === null || typeof value === 'undefined') return null;
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return null;
+  return Math.trunc(parsed);
+}
+
+function formatDateKey(date: Date): string {
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, '0');
+  const day = `${date.getDate()}`.padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 function clampInt(input: string | null, fallback: number, min: number, max: number): number {

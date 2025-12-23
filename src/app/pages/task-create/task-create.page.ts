@@ -6,11 +6,9 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, finalize, map, of, switchMap } from 'rxjs';
 import { TaskService } from '../../core/task.service';
 import { CategoryService } from '../../core/category.service';
-import { Task, TaskOwner, TaskStatus, TaskTimeMode } from '../../core/task.model';
+import { Task, TaskOwner, TaskTimeMode } from '../../core/task.model';
 import { Category } from '../../core/category.model';
 import { PriorityLevel } from '../../core/priority.model';
-import { UserService } from '../../core/user.service';
-import { User } from '../../core/user.model';
 import { AuthService } from '../../core/auth.service';
 
 const EFFORT_OPTIONS = [5, 10, 15, 30, 45, 60, 90, 120];
@@ -25,7 +23,6 @@ const EFFORT_OPTIONS = [5, 10, 15, 30, 45, 60, 90, 120];
 export class TaskCreatePage implements OnInit {
   private readonly taskService = inject(TaskService);
   private readonly categoryService = inject(CategoryService);
-  private readonly userService = inject(UserService);
   private readonly authService = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -33,12 +30,10 @@ export class TaskCreatePage implements OnInit {
 
   protected categories = signal<Category[]>([]);
   protected projects = signal<Task[]>([]);
-  protected users = signal<User[]>([]);
   protected error = signal<string | null>(null);
 
   protected newTitle = signal('');
   protected newOwner = signal<TaskOwner | null>(null);
-  protected newStatus = signal<TaskStatus>('inbox');
   protected newEffortIndex = signal(2);
   protected newCategory = signal<string | null>(null);
   protected newTimeMode = signal<TaskTimeMode | null>(null);
@@ -47,7 +42,6 @@ export class TaskCreatePage implements OnInit {
   protected newIsProject = signal(false);
   protected newParentId = signal<string | null>(null);
   protected newPriority = signal<PriorityLevel>('none');
-  protected userPriorities = signal<Record<string, PriorityLevel>>({});
   protected submitting = signal(false);
 
   private readonly currentUserId = computed(() => this.authService.currentUser()?.id ?? 'you');
@@ -65,7 +59,6 @@ export class TaskCreatePage implements OnInit {
     this.returnUrl = this.resolveReturnUrl(this.route.snapshot.queryParamMap.get('returnUrl'));
     this.loadCategories();
     this.loadProjects();
-    this.loadUsers();
   }
 
   loadCategories(): void {
@@ -88,18 +81,6 @@ export class TaskCreatePage implements OnInit {
       });
   }
 
-  loadUsers(): void {
-    this.userService
-      .list()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (users) => {
-          this.users.set(users);
-          this.ensurePriorityDefaults(users);
-        },
-        error: () => this.error.set('Nutzer konnten nicht geladen werden')
-      });
-  }
 
   setEffortIndex(value: number | string): void {
     const parsed = Number(value);
@@ -109,8 +90,14 @@ export class TaskCreatePage implements OnInit {
   }
 
   setTimeMode(mode: TaskTimeMode | null): void {
-    this.newTimeMode.set(mode ?? null);
-    if (mode === 'fixed') {
+    const nextMode = mode ?? null;
+    this.newTimeMode.set(nextMode);
+    if (!nextMode) {
+      this.newDueDate.set(null);
+      this.newPlannedDate.set(null);
+      return;
+    }
+    if (nextMode === 'fixed') {
       this.newDueDate.set(null);
     } else {
       this.newPlannedDate.set(null);
@@ -141,23 +128,17 @@ export class TaskCreatePage implements OnInit {
     this.newCategory.set(normalized);
   }
 
-  setUserPriority(userId: string, priority: PriorityLevel): void {
-    const trimmedId = userId?.trim();
-    if (!trimmedId) return;
-
-    this.userPriorities.update((current) => ({ ...current, [trimmedId]: priority }));
-  }
-
   setSelfPriority(priority: PriorityLevel): void {
     this.newPriority.set(priority);
-    this.setUserPriority(this.currentUserId(), priority);
   }
 
   canSubmit(): boolean {
     if (this.submitting()) return false;
     const title = this.newTitle().trim();
     if (!title) return false;
-    if (this.newTimeMode() === 'fixed' && !this.newPlannedDate()) return false;
+    const timeMode = this.newTimeMode();
+    if (timeMode === 'fixed' && !this.newPlannedDate()) return false;
+    if (timeMode === 'flexible' && !this.newDueDate()) return false;
     return true;
   }
 
@@ -168,6 +149,10 @@ export class TaskCreatePage implements OnInit {
     if (!title || this.submitting()) return;
     if (timeMode === 'fixed' && !this.newPlannedDate()) {
       this.error.set('Geplantes Datum ist für fixe Aufgaben erforderlich');
+      return;
+    }
+    if (timeMode === 'flexible' && !this.newDueDate()) {
+      this.error.set('Fälligkeitsdatum ist für flexible Aufgaben erforderlich');
       return;
     }
 
@@ -183,7 +168,6 @@ export class TaskCreatePage implements OnInit {
       title,
       description: null,
       owner: this.newOwner(),
-      status: this.newStatus(),
       effort: this.effortValue,
       category: this.newCategory(),
       time_mode: timeMode,
@@ -195,24 +179,19 @@ export class TaskCreatePage implements OnInit {
     };
 
     const priority = this.newPriority();
-    const priorityUpdates = this.buildPriorityUpdates();
 
     this.taskService
       .create(payload)
       .pipe(
         switchMap((task) => {
-          if (priority === 'none' && !priorityUpdates.length) {
+          if (priority === 'none') {
             return of(task);
           }
-          const updates = priorityUpdates.length
-            ? priorityUpdates
-            : [{ user_id: this.currentUserId(), priority }];
-          return this.taskService
-            .updatePriorities(task.id, updates)
-            .pipe(
-              map(() => task),
-              catchError(() => of(task))
-            );
+          const updates = [{ user_id: this.currentUserId(), priority }];
+          return this.taskService.updatePriorities(task.id, updates).pipe(
+            map(() => task),
+            catchError(() => of(task))
+          );
         }),
         finalize(() => this.submitting.set(false)),
         takeUntilDestroyed(this.destroyRef)
@@ -242,22 +221,4 @@ export class TaskCreatePage implements OnInit {
     return trimmed ? trimmed : null;
   }
 
-  private ensurePriorityDefaults(users: User[]): void {
-    const current = this.userPriorities();
-    const next: Record<string, PriorityLevel> = { ...current };
-
-    for (const user of users) {
-      if (!next[user.id]) {
-        next[user.id] = 'none';
-      }
-    }
-
-    this.userPriorities.set(next);
-  }
-
-  private buildPriorityUpdates(): { user_id: string; priority: PriorityLevel }[] {
-    return Object.entries(this.userPriorities())
-      .filter(([, priority]) => priority !== 'none')
-      .map(([userId, priority]) => ({ user_id: userId, priority }));
-  }
 }

@@ -12,6 +12,7 @@ import { Task } from '../../core/task.model';
 import { PriorityLevel, TaskPriority } from '../../core/priority.model';
 import { User } from '../../core/user.model';
 import { highestPriority, priorityScore } from '../../core/priority.utils';
+import { OwnerFilterService } from '../../core/owner-filter.service';
 
 type TaskCardView = {
   task: Task;
@@ -29,6 +30,7 @@ type TaskCardView = {
 export class ProjectDetailPage implements OnInit {
   private readonly taskService = inject(TaskService);
   private readonly userService = inject(UserService);
+  private readonly ownerFilter = inject(OwnerFilterService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
@@ -58,16 +60,20 @@ export class ProjectDetailPage implements OnInit {
     return this.subtaskStatus() === 'VALID' && this.subtaskValue().trim().length > 0 && !this.submitting();
   });
 
+  protected readonly filteredSubtasks = computed(() => this.ownerFilter.filterTasks(this.subtasks()));
+
   protected readonly progressLabel = computed(() => {
-    const total = this.subtasks().length;
+    const total = this.filteredSubtasks().length;
     const completed = this.completedCount();
     return `${completed}/${total} erledigt`;
   });
 
-  protected readonly completedCount = computed(() => this.subtasks().filter((task) => task.status === 'done').length);
+  protected readonly completedCount = computed(
+    () => this.filteredSubtasks().filter((task) => task.status === 'done').length
+  );
 
   protected readonly subtaskCards = computed<TaskCardView[]>(() => {
-    const list = this.subtasks();
+    const list = this.filteredSubtasks();
     const priorities = this.taskPriorities();
     return this.sortByPriority(
       list.map((task) => ({
@@ -99,10 +105,9 @@ export class ProjectDetailPage implements OnInit {
       title,
       description: null,
       owner: 'both',
-      status: 'planned',
       effort: 15,
       category: project.category,
-      time_mode: 'flexible',
+      time_mode: null,
       due_date: null,
       planned_date: null,
       is_project: 0,
@@ -197,6 +202,10 @@ export class ProjectDetailPage implements OnInit {
         }
         this.taskPriorities.set(next);
       });
+  }
+
+  protected handleTaskUpdated(task: Task): void {
+    this.subtasks.update((items) => items.map((item) => (item.id === task.id ? task : item)));
   }
 
   private sortByPriority(items: TaskCardView[]): TaskCardView[] {

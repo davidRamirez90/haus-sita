@@ -12,6 +12,10 @@ import { Task } from '../../core/task.model';
 import { PriorityLevel, TaskPriority } from '../../core/priority.model';
 import { User } from '../../core/user.model';
 import { highestPriority, priorityScore } from '../../core/priority.utils';
+import { OwnerFilterService } from '../../core/owner-filter.service';
+
+const NO_CATEGORY_ID = '__none__';
+const NO_CATEGORY_LABEL = 'Ohne Kategorie';
 
 type TaskCardView = {
   task: Task;
@@ -30,6 +34,7 @@ export class CategoriesPage implements OnInit {
   private readonly categoryService = inject(CategoryService);
   private readonly taskService = inject(TaskService);
   private readonly userService = inject(UserService);
+  private readonly ownerFilter = inject(OwnerFilterService);
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly categories = signal<Category[]>([]);
@@ -42,17 +47,20 @@ export class CategoriesPage implements OnInit {
   private readonly loadingTasks = signal(false);
   protected readonly loading = computed(() => this.loadingCategories() || this.loadingTasks());
   protected readonly error = signal<string | null>(null);
+  protected readonly noCategoryId = NO_CATEGORY_ID;
 
   protected readonly selectedCategoryLabel = computed(() => {
     const selected = this.selectedCategoryId();
     if (!selected) return 'Alle Räume';
+    if (selected === NO_CATEGORY_ID) return NO_CATEGORY_LABEL;
     return this.categories().find((category) => category.id === selected)?.label ?? 'Alle Räume';
   });
 
   protected readonly visibleTasks = computed<TaskCardView[]>(() => {
     const showCompleted = this.showCompleted();
     const priorities = this.taskPriorities();
-    const list = showCompleted ? this.tasks() : this.tasks().filter((task) => task.status !== 'done');
+    const filtered = this.ownerFilter.filterTasks(this.tasks());
+    const list = showCompleted ? filtered : filtered.filter((task) => task.status !== 'done');
 
     return this.sortByPriority(
       list.map((task) => ({
@@ -91,13 +99,9 @@ export class CategoriesPage implements OnInit {
       .subscribe({
         next: (categories) => {
           this.categories.set(categories);
-          const initial = categories[0]?.id ?? null;
+          const initial = categories[0]?.id ?? NO_CATEGORY_ID;
           this.selectedCategoryId.set(initial);
-          if (initial) {
-            this.loadTasks(initial);
-          } else {
-            this.tasks.set([]);
-          }
+          this.loadTasks(initial);
         },
         error: () => this.error.set('Kategorien konnten nicht geladen werden')
       });
@@ -108,15 +112,19 @@ export class CategoriesPage implements OnInit {
     this.error.set(null);
 
     this.taskService
-      .list({ category: categoryId, limit: 200 })
+      .list(categoryId === NO_CATEGORY_ID ? { limit: 200 } : { category: categoryId, limit: 200 })
       .pipe(
         finalize(() => this.loadingTasks.set(false)),
         takeUntilDestroyed(this.destroyRef)
       )
       .subscribe({
         next: (tasks) => {
-          this.tasks.set(tasks);
-          this.fetchPriorities(tasks);
+          const filtered =
+            categoryId === NO_CATEGORY_ID
+              ? tasks.filter((task) => task.category === null || typeof task.category === 'undefined')
+              : tasks;
+          this.tasks.set(filtered);
+          this.fetchPriorities(filtered);
         },
         error: () => this.error.set('Aufgaben konnten nicht geladen werden')
       });
@@ -157,6 +165,10 @@ export class CategoriesPage implements OnInit {
         }
         this.taskPriorities.set(next);
       });
+  }
+
+  protected handleTaskUpdated(task: Task): void {
+    this.tasks.update((items) => items.map((item) => (item.id === task.id ? task : item)));
   }
 
   private sortByPriority(items: TaskCardView[]): TaskCardView[] {

@@ -11,6 +11,24 @@
       <a routerLink="/projects" routerLinkActive="active">Projekte</a>
       <a routerLink="/inbox" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Eingang</a>
     </nav>
+    <div class="owner-toggle" role="group" aria-label="Aufgabenfilter">
+      <button
+        type="button"
+        [class.active]="ownerMode() === 'all'"
+        [attr.aria-pressed]="ownerMode() === 'all'"
+        (click)="setOwnerMode('all')"
+      >
+        Alle
+      </button>
+      <button
+        type="button"
+        [class.active]="ownerMode() === 'mine'"
+        [attr.aria-pressed]="ownerMode() === 'mine'"
+        (click)="setOwnerMode('mine')"
+      >
+        Meine
+      </button>
+    </div>
   </header>
 
   <main class="page">

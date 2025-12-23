@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -9,21 +9,20 @@ import { Task } from '../../core/task.model';
 import { UserService } from '../../core/user.service';
 import { User } from '../../core/user.model';
 import { TaskPriority } from '../../core/priority.model';
+import { OwnerFilterService } from '../../core/owner-filter.service';
 
 @Component({
   selector: 'app-inbox-page',
-  standalone: true,
   imports: [CommonModule, RouterModule, TaskCardComponent],
   templateUrl: './inbox.page.html',
   styleUrls: ['./inbox.page.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class InboxPage implements OnInit {
-  constructor(
-    private readonly taskService: TaskService,
-    private readonly userService: UserService,
-    private readonly destroyRef: DestroyRef
-  ) {}
+  private readonly taskService = inject(TaskService);
+  private readonly userService = inject(UserService);
+  private readonly ownerFilter = inject(OwnerFilterService);
+  private readonly destroyRef = inject(DestroyRef);
 
   protected tasks = signal<Task[]>([]);
   protected users = signal<User[]>([]);
@@ -32,7 +31,8 @@ export class InboxPage implements OnInit {
   protected error = signal<string | null>(null);
 
   protected triageSections = computed(() => {
-    const ordered = this.sortByCreated(this.tasks());
+    const filtered = this.ownerFilter.filterTasks(this.tasks()).filter((task) => task.status !== 'done');
+    const ordered = this.sortByCreated(filtered);
 
     const result: Record<'unassigned' | 'missingScheduling' | 'missingCategory' | 'ready', Task[]> = {
       unassigned: [],
@@ -159,5 +159,9 @@ export class InboxPage implements OnInit {
         }
         this.taskPriorities.set(next);
       });
+  }
+
+  protected handleTaskUpdated(task: Task): void {
+    this.tasks.update((items) => items.map((item) => (item.id === task.id ? task : item)));
   }
 }

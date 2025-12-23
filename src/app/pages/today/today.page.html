@@ -32,6 +32,7 @@
               [priority]="item.priority"
               [priorities]="item.priorities"
               [users]="users()"
+              (taskUpdated)="handleTaskUpdated($event)"
               class="task-item"
             ></app-task-card>
           }

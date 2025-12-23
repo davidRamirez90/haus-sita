@@ -10,6 +10,7 @@ import { Task } from '../../core/task.model';
 import { PriorityLevel, TaskPriority } from '../../core/priority.model';
 import { User } from '../../core/user.model';
 import { highestPriority, priorityForUser, priorityScore } from '../../core/priority.utils';
+import { OwnerFilterService } from '../../core/owner-filter.service';
 
 type TaskCardView = {
   task: Task;
@@ -35,6 +36,7 @@ export class TodayPage implements OnInit {
   private readonly taskService = inject(TaskService);
   private readonly userService = inject(UserService);
   private readonly authService = inject(AuthService);
+  private readonly ownerFilter = inject(OwnerFilterService);
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly tasks = signal<Task[]>([]);
@@ -47,7 +49,7 @@ export class TodayPage implements OnInit {
   private readonly partnerUserId = computed(() => {
     const currentId = this.currentUserId();
     const partner = this.users().find((user) => user.id !== currentId)?.id;
-    return partner ?? 'partner';
+    return partner ?? (currentId === 'you' ? 'partner' : 'you');
   });
   private readonly todayKey = this.toDateKey(new Date());
 
@@ -60,31 +62,37 @@ export class TodayPage implements OnInit {
   protected readonly totalEffortLabel = computed(() => this.formatEffort(this.totalEffort()));
 
   protected readonly totalEffort = computed(() =>
-    this.tasks().reduce((sum, task) => {
-      const effort = task.effort ?? 0;
-      return sum + (Number.isFinite(effort) ? effort : 0);
-    }, 0)
+    this.ownerFilter
+      .filterTasks(this.tasks())
+      .filter((task) => task.status !== 'done')
+      .reduce((sum, task) => {
+        const effort = task.effort ?? 0;
+        return sum + (Number.isFinite(effort) ? effort : 0);
+      }, 0)
   );
 
   protected readonly sections = computed<TaskSection[]>(() => {
-    const list = this.tasks();
+    const list = this.ownerFilter.filterTasks(this.tasks()).filter((task) => task.status !== 'done');
     const priorities = this.taskPriorities();
     const partnerName = this.userLabel(this.partnerUserId(), 'Partner');
 
-    const groups: Record<'you' | 'partner' | 'both', TaskCardView[]> = {
-      you: [],
+    const groups: Record<'mine' | 'partner' | 'both', TaskCardView[]> = {
+      mine: [],
       partner: [],
       both: []
     };
+
+    const currentId = this.currentUserId();
+    const partnerId = this.partnerUserId();
 
     for (const task of list) {
       const taskPriorities = priorities[task.id] ?? [];
       const priority = this.priorityForSection(task.owner, taskPriorities);
       const card: TaskCardView = { task, priority, priorities: taskPriorities };
 
-      if (task.owner === 'you') {
-        groups.you.push(card);
-      } else if (task.owner === 'partner') {
+      if (task.owner === currentId) {
+        groups.mine.push(card);
+      } else if (task.owner === partnerId) {
         groups.partner.push(card);
       } else {
         groups.both.push(card);
@@ -93,10 +101,10 @@ export class TodayPage implements OnInit {
 
     return [
       {
-        id: 'you',
+        id: 'mine',
         title: 'Deine Aufgaben',
         emptyMessage: 'Keine Aufgaben für dich heute.',
-        tasks: this.sortByPriority(groups.you)
+        tasks: this.sortByPriority(groups.mine)
       },
       {
         id: 'partner',
@@ -178,11 +186,11 @@ export class TodayPage implements OnInit {
   }
 
   private priorityForSection(owner: Task['owner'], priorities: TaskPriority[]): PriorityLevel {
-    if (owner === 'you') {
+    if (owner === this.currentUserId()) {
       return priorityForUser(priorities, this.currentUserId());
     }
 
-    if (owner === 'partner') {
+    if (owner === this.partnerUserId()) {
       return priorityForUser(priorities, this.partnerUserId());
     }
 
@@ -248,5 +256,9 @@ export class TodayPage implements OnInit {
     const month = `${date.getMonth() + 1}`.padStart(2, '0');
     const day = `${date.getDate()}`.padStart(2, '0');
     return `${year}-${month}-${day}`;
+  }
+
+  protected handleTaskUpdated(task: Task): void {
+    this.tasks.update((items) => items.map((item) => (item.id === task.id ? task : item)));
   }
 }

@@ -8,6 +8,7 @@ import { CategoryService } from '../../core/category.service';
 import { TaskService } from '../../core/task.service';
 import { Category } from '../../core/category.model';
 import { Task } from '../../core/task.model';
+import { OwnerFilterService } from '../../core/owner-filter.service';
 
 type ProjectCard = {
   id: string;
@@ -29,6 +30,7 @@ type ProjectCard = {
 export class ProjectsPage implements OnInit {
   private readonly taskService = inject(TaskService);
   private readonly categoryService = inject(CategoryService);
+  private readonly ownerFilter = inject(OwnerFilterService);
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly projects = signal<Task[]>([]);
@@ -38,8 +40,8 @@ export class ProjectsPage implements OnInit {
   protected readonly error = signal<string | null>(null);
 
   protected readonly projectCards = computed<ProjectCard[]>(() => {
-    const projects = this.projects();
-    const tasks = this.tasks();
+    const projects = this.ownerFilter.filterTasks(this.projects());
+    const tasks = this.ownerFilter.filterTasks(this.tasks());
     const categoryMap = this.categoryMap();
 
     return projects.map((project) => {

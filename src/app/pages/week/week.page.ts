@@ -9,6 +9,7 @@ import { Task } from '../../core/task.model';
 import { PriorityLevel, TaskPriority } from '../../core/priority.model';
 import { User } from '../../core/user.model';
 import { highestPriority, priorityScore } from '../../core/priority.utils';
+import { OwnerFilterService } from '../../core/owner-filter.service';
 
 type TaskCardView = {
   task: Task;
@@ -40,6 +41,7 @@ type WeekEntry = WeekDay & {
 export class WeekPage implements OnInit {
   private readonly taskService = inject(TaskService);
   private readonly userService = inject(UserService);
+  private readonly ownerFilter = inject(OwnerFilterService);
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly tasks = signal<Task[]>([]);
@@ -55,7 +57,7 @@ export class WeekPage implements OnInit {
 
   protected readonly weekEntries = computed<WeekEntry[]>(() => {
     const entries = this.weekDays();
-    const list = this.tasks();
+    const list = this.ownerFilter.filterTasks(this.tasks()).filter((task) => task.status !== 'done');
     const priorities = this.taskPriorities();
 
     return entries.map((day) => {
@@ -82,7 +84,7 @@ export class WeekPage implements OnInit {
   });
 
   protected readonly weekBucket = computed<TaskCardView[]>(() => {
-    const list = this.tasks();
+    const list = this.ownerFilter.filterTasks(this.tasks()).filter((task) => task.status !== 'done');
     const priorities = this.taskPriorities();
     const unassigned = list.filter((task) => task.status === 'planned' && !task.planned_date);
 
@@ -258,5 +260,9 @@ export class WeekPage implements OnInit {
       return `${hours}h`;
     }
     return `${remainder}m`;
+  }
+
+  protected handleTaskUpdated(task: Task): void {
+    this.tasks.update((items) => items.map((item) => (item.id === task.id ? task : item)));
   }
 }

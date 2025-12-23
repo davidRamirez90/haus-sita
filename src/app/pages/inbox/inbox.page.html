@@ -33,6 +33,7 @@
               [task]="task"
               [priorities]="taskPriorities()[task.id] ?? []"
               [users]="users()"
+              (taskUpdated)="handleTaskUpdated($event)"
               class="task-item"
             ></app-task-card>
           }
@@ -55,6 +56,7 @@
               [task]="task"
               [priorities]="taskPriorities()[task.id] ?? []"
               [users]="users()"
+              (taskUpdated)="handleTaskUpdated($event)"
               class="task-item"
             ></app-task-card>
           }
@@ -77,6 +79,7 @@
               [task]="task"
               [priorities]="taskPriorities()[task.id] ?? []"
               [users]="users()"
+              (taskUpdated)="handleTaskUpdated($event)"
               class="task-item"
             ></app-task-card>
           }
@@ -99,6 +102,7 @@
               [task]="task"
               [priorities]="taskPriorities()[task.id] ?? []"
               [users]="users()"
+              (taskUpdated)="handleTaskUpdated($event)"
               class="task-item"
             ></app-task-card>
           }

@@ -25,16 +25,6 @@
 
     <div class="field-grid">
       <div class="field">
-        <label class="field-label">Status</label>
-        <select [ngModel]="newStatus()" (ngModelChange)="newStatus.set($event)">
-          <option value="inbox">Eingang</option>
-          <option value="planned">Geplant</option>
-          <option value="today">Heute</option>
-          <option value="done">Erledigt</option>
-        </select>
-      </div>
-
-      <div class="field">
         <label class="field-label">Verantwortlich</label>
         <select [ngModel]="newOwner()" (ngModelChange)="setOwner($event)">
           <option [ngValue]="null">Nicht zugewiesen</option>
@@ -127,23 +117,6 @@
           <option value="medium">Mittel</option>
           <option value="high">Hoch</option>
         </select>
-      </div>
-
-      <div class="field" *ngIf="users().length">
-        <label class="field-label">Prioritäten je Person</label>
-        <div class="user-priority" *ngFor="let user of users()">
-          <div class="user-pill" [style.backgroundColor]="user.color || '#E5E7EB'">{{ user.name }}</div>
-          <select
-            [ngModel]="userPriorities()[user.id] ?? 'none'"
-            (ngModelChange)="setUserPriority(user.id, $event)"
-            aria-label="Priorität für {{ user.name }}"
-          >
-            <option value="none">Keine</option>
-            <option value="low">Niedrig</option>
-            <option value="medium">Mittel</option>
-            <option value="high">Hoch</option>
-          </select>
-        </div>
       </div>
     </div>
   </div>

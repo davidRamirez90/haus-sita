@@ -1,7 +1,8 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
 import { Task } from '../../core/task.model';
 import { PriorityLevel, TaskPriority } from '../../core/priority.model';
 import { User } from '../../core/user.model';
+import { TaskService } from '../../core/task.service';
 
 @Component({
   selector: 'app-task-card',
@@ -11,10 +12,15 @@ import { User } from '../../core/user.model';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TaskCardComponent {
+  private readonly taskService = inject(TaskService);
+
   readonly task = input.required<Task>();
   readonly priority = input<PriorityLevel>('none');
   readonly priorities = input<TaskPriority[]>([]);
   readonly users = input<User[]>([]);
+  readonly taskUpdated = output<Task>();
+
+  readonly markingDone = signal(false);
 
   private readonly priorityColors: Record<PriorityLevel, string> = {
     none: '#D1D5DB',
@@ -84,6 +90,8 @@ export class TaskCardComponent {
     () => this.missingOwner() || this.missingScheduling() || this.missingCategory()
   );
 
+  readonly isCompleted = computed(() => Boolean(this.task().completed_at) || this.task().status === 'done');
+
   readonly attentionChips = computed(() => {
     const chips: { label: string; icon: string }[] = [];
 
@@ -101,4 +109,20 @@ export class TaskCardComponent {
 
     return chips;
   });
+
+  markDone(): void {
+    if (this.isCompleted() || this.markingDone()) return;
+    this.markingDone.set(true);
+
+    const completedAt = new Date().toISOString();
+    this.taskService.update(this.task().id, { completed_at: completedAt }).subscribe({
+      next: (task) => {
+        this.markingDone.set(false);
+        this.taskUpdated.emit(task);
+      },
+      error: () => {
+        this.markingDone.set(false);
+      }
+    });
+  }
 }

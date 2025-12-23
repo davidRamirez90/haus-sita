@@ -11,6 +11,11 @@
   </header>
 
   <div class="chip-row" aria-label="Raumfilter">
+    <app-category-chip
+      label="Ohne Kategorie"
+      [active]="selectedCategoryId() === noCategoryId"
+      (selected)="selectCategory(noCategoryId)"
+    ></app-category-chip>
     @for (category of categories(); track category.id) {
       <app-category-chip
         [label]="category.label"
@@ -41,6 +46,7 @@
           [priority]="item.priority"
           [priorities]="item.priorities"
           [users]="users()"
+          (taskUpdated)="handleTaskUpdated($event)"
           class="task-item"
         ></app-task-card>
       }

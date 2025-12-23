@@ -40,5 +40,19 @@
         }
       </div>
     }
+
+    @if (!isCompleted()) {
+      <div class="action-row">
+        <button
+          type="button"
+          class="action-button"
+          [disabled]="markingDone()"
+          [attr.aria-label]="'Als erledigt markieren: ' + task().title"
+          (click)="markDone()"
+        >
+          Erledigt
+        </button>
+      </div>
+    }
   </div>
 </article>
